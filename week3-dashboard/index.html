@@ -1,0 +1,1701 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blockchain Lab #3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <style>
+      /* Card 5 tree connector (horizontal line via pseudo-element) */
+      .l1l2-branch {
+        position: relative;
+      }
+      .l1l2-branch::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 2px;
+        background: rgb(55 65 81); /* gray-700 */
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-gray-900 text-gray-100">
+    <div class="mx-auto max-w-6xl px-4 py-10">
+      <header class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="min-w-0">
+          <h1 id="appTitle" class="text-2xl font-semibold tracking-tight">Blockchain Lab #3</h1>
+          <p id="appSubtitle" class="mt-1 text-sm text-gray-300">ethers.js v6 + MetaMask 지갑 연결 대시보드</p>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+          <div class="flex items-center gap-2 rounded-2xl border border-gray-700 bg-gray-800 p-1">
+            <button
+              id="netBtnSepolia"
+              type="button"
+              class="rounded-xl px-3 py-2 text-xs font-semibold text-gray-200 transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+            >
+              Sepolia
+            </button>
+            <button
+              id="netBtnBase"
+              type="button"
+              class="rounded-xl px-3 py-2 text-xs font-semibold text-gray-200 transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+            >
+              Base Sepolia
+            </button>
+            <button
+              id="netBtnGiwa"
+              type="button"
+              class="rounded-xl px-3 py-2 text-xs font-semibold text-gray-200 transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+            >
+              GIWA Sepolia
+            </button>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 rounded-full border border-gray-700 bg-gray-800 px-3 py-2">
+            <span id="connDot" class="h-2.5 w-2.5 rounded-full bg-gray-500"></span>
+            <span id="connText" class="text-sm text-gray-200">미연결</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <!-- Card 1: Wallet -->
+        <section class="rounded-2xl border border-gray-700 bg-gray-800 p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold">지갑 연결</h2>
+              <p class="mt-1 text-sm text-gray-300">MetaMask를 연결해 주소/잔액/Nonce를 확인하세요.</p>
+            </div>
+            <button
+              id="connectBtn"
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              MetaMask 연결
+            </button>
+          </div>
+
+          <div id="installHint" class="mt-4 hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div class="font-semibold">MetaMask가 감지되지 않았습니다.</div>
+            <div class="mt-1 text-amber-200/90">
+              - 확장 프로그램이 설치되어 있는지 확인하세요.<br />
+              - 이 파일을 <span class="font-semibold">file://</span>로 직접 열면 감지가 안 될 수 있어요. 가능하면
+              <span class="font-semibold">로컬 서버(예: http://localhost)</span>로 실행하세요.
+            </div>
+            <span class="mt-3 block">
+              <a
+                class="font-semibold text-amber-100 underline decoration-amber-200/60 underline-offset-4 hover:text-white"
+                href="https://metamask.io/download/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                MetaMask 설치 페이지
+              </a>
+            </span>
+          </div>
+
+          <div id="walletInfo" class="mt-6 hidden space-y-4">
+            <div class="grid grid-cols-1 gap-3">
+              <div class="rounded-xl border border-gray-700 bg-gray-900/40 p-4">
+                <div class="text-xs font-medium text-gray-300">지갑 주소</div>
+                <div class="mt-1 flex items-center justify-between gap-3">
+                  <code id="address" class="block truncate text-sm text-gray-100"></code>
+                  <button
+                    id="copyAddrBtn"
+                    type="button"
+                    class="shrink-0 rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-200 transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400/40"
+                  >
+                    복사
+                  </button>
+                </div>
+                <div id="copyToast" class="mt-2 hidden text-xs text-emerald-300">복사되었습니다.</div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="rounded-xl border border-gray-700 bg-gray-900/40 p-4">
+                  <div class="text-xs font-medium text-gray-300">ETH 잔액</div>
+                  <div id="balance" class="mt-1 text-xl font-semibold"></div>
+                </div>
+                <div class="rounded-xl border border-gray-700 bg-gray-900/40 p-4">
+                  <div class="text-xs font-medium text-gray-300">현재 Nonce</div>
+                  <div id="nonce" class="mt-1 text-xl font-semibold"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="faucetWarn" class="hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+              <div class="font-semibold">잔액이 0입니다.</div>
+              <div class="mt-1">
+                Faucet에서 ETH를 받아오세요.
+                <a
+                  id="faucetLink"
+                  class="ml-2 font-semibold underline decoration-rose-200/60 underline-offset-4 hover:text-white"
+                  href="#"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Faucet 열기 →
+                </a>
+              </div>
+            </div>
+
+            <div id="walletError" class="hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"></div>
+          </div>
+        </section>
+
+        <!-- Card 2: Send ETH -->
+        <section class="rounded-2xl border border-gray-700 bg-gray-800 p-6">
+          <h2 class="text-lg font-semibold">ETH 송금</h2>
+          <p class="mt-1 text-sm text-gray-300">받는 주소와 금액을 입력하고, 미리보기 후 송금하세요.</p>
+
+          <div class="mt-6 space-y-4">
+            <div>
+              <label for="toAddress" class="text-xs font-medium text-gray-300">받는 주소</label>
+              <input
+                id="toAddress"
+                placeholder="0x..."
+                autocomplete="off"
+                spellcheck="false"
+                class="mt-2 w-full rounded-xl border border-gray-700 bg-gray-900/40 px-4 py-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+              />
+            </div>
+
+            <div>
+              <label for="sendAmount" class="text-xs font-medium text-gray-300">금액 (ETH)</label>
+              <input
+                id="sendAmount"
+                type="number"
+                min="0"
+                step="0.000001"
+                value="0.001"
+                class="mt-2 w-full rounded-xl border border-gray-700 bg-gray-900/40 px-4 py-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+              />
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <button
+                id="previewBtn"
+                type="button"
+                disabled
+                class="inline-flex flex-1 items-center justify-center rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-100 transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                미리보기
+              </button>
+              <button
+                id="sendBtn"
+                type="button"
+                disabled
+                class="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                송금 실행
+              </button>
+            </div>
+
+            <div id="txLoading" class="hidden rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 text-sm text-indigo-200">
+              트랜잭션 처리 중...
+            </div>
+
+            <div id="previewPanel" class="hidden rounded-xl border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-200">
+              <div class="flex items-center justify-between gap-3">
+                <div class="font-semibold">미리보기</div>
+                <div class="text-xs text-gray-400">Gas Limit: <span id="gasLimitText" class="font-semibold text-gray-200">21000</span></div>
+              </div>
+              <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                  <div class="text-xs text-gray-400">예상 Nonce</div>
+                  <div id="previewNonce" class="mt-1 text-lg font-semibold text-gray-100"></div>
+                </div>
+                <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                  <div class="text-xs text-gray-400">받는 주소(정규화)</div>
+                  <code id="previewTo" class="mt-1 block truncate text-sm text-gray-100"></code>
+                </div>
+              </div>
+            </div>
+
+            <div id="txError" class="hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"></div>
+
+            <div id="txResult" class="hidden rounded-xl border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-200">
+              <div class="flex items-center justify-between gap-3">
+                <div class="font-semibold">결과</div>
+                <span id="txStatusBadge" class="rounded-full border border-gray-700 bg-gray-800 px-3 py-1 text-xs font-semibold"></span>
+              </div>
+
+              <div class="mt-3 space-y-3">
+                <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                  <div class="text-xs text-gray-400">TX Hash</div>
+                  <div class="mt-1 flex items-center justify-between gap-3">
+                    <code id="txHash" class="block truncate text-sm text-gray-100"></code>
+                    <a
+                      id="txExplorer"
+                      class="shrink-0 rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-200 transition hover:bg-gray-700"
+                      href="#"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Explorer
+                    </a>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                    <div class="text-xs text-gray-400">Nonce</div>
+                    <div id="txNonce" class="mt-1 text-lg font-semibold text-gray-100"></div>
+                  </div>
+                  <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                    <div class="text-xs text-gray-400">Gas Used</div>
+                    <div id="txGasUsed" class="mt-1 text-lg font-semibold text-gray-100"></div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                    <div class="text-xs text-gray-400">Gas Price (Effective)</div>
+                    <div id="txGasPrice" class="mt-1 text-lg font-semibold text-gray-100"></div>
+                  </div>
+                  <div class="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+                    <div class="text-xs text-gray-400">수수료 (gasUsed × gasPrice)</div>
+                    <div id="txFee" class="mt-1 text-lg font-semibold text-gray-100"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Faucet list (Testnets) -->
+        <section class="rounded-2xl border border-gray-700 bg-gray-800 p-6 md:col-span-2">
+          <h2 class="text-lg font-semibold">테스트넷 Faucet 목록</h2>
+          <p class="mt-1 text-sm text-gray-300">각 네트워크별 Faucet 링크 모음입니다.</p>
+
+          <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <!-- Sepolia -->
+            <div class="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5">
+              <div class="font-semibold text-blue-100">Sepolia</div>
+              <ul class="mt-4 space-y-2 text-sm">
+                <li>
+                  <a
+                    class="font-semibold text-blue-50 underline decoration-blue-200/50 underline-offset-4 hover:text-white"
+                    href="https://sepoliafaucet.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    sepoliafaucet.com
+                  </a>
+                </li>
+                <li>
+                  <a
+                    class="font-semibold text-blue-50 underline decoration-blue-200/50 underline-offset-4 hover:text-white"
+                    href="https://faucet.quicknode.com/ethereum/sepolia"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    QuickNode Sepolia Faucet
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Base Sepolia -->
+            <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+              <div class="font-semibold text-emerald-100">Base Sepolia</div>
+              <ul class="mt-4 space-y-2 text-sm">
+                <li>
+                  <a
+                    class="font-semibold text-emerald-50 underline decoration-emerald-200/50 underline-offset-4 hover:text-white"
+                    href="https://docs.base.org/tools/network-faucets/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Base: Network Faucets 문서
+                  </a>
+                </li>
+                <li>
+                  <a
+                    class="font-semibold text-emerald-50 underline decoration-emerald-200/50 underline-offset-4 hover:text-white"
+                    href="https://superbridge.app/base-sepolia"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Superbridge (Sepolia → Base Sepolia)
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <!-- GIWA Sepolia -->
+            <div class="rounded-2xl border border-fuchsia-500/30 bg-fuchsia-500/10 p-5">
+              <div class="font-semibold text-fuchsia-100">GIWA Sepolia</div>
+              <ul class="mt-4 space-y-2 text-sm">
+                <li>
+                  <a
+                    class="font-semibold text-fuchsia-50 underline decoration-fuchsia-200/50 underline-offset-4 hover:text-white"
+                    href="https://docs.giwa.io/giwa-chain/en/get-started/faucet"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    GIWA Faucet 안내
+                  </a>
+                </li>
+                <li>
+                  <a
+                    class="font-semibold text-fuchsia-50 underline decoration-fuchsia-200/50 underline-offset-4 hover:text-white"
+                    href="https://bridge-giwa.vercel.app/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    GIWA Bridge (Sepolia ↔ GIWA)
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 3: Track Transaction -->
+        <section class="rounded-2xl border border-gray-700 bg-gray-800 p-6 md:col-span-2">
+          <h2 class="text-lg font-semibold">트랜잭션 추적</h2>
+          <p class="mt-1 text-sm text-gray-300">TX Hash로 트랜잭션 상세 정보를 조회합니다. (RPC 직접 조회)</p>
+
+          <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="md:col-span-1">
+              <label for="rpcUrl" class="text-xs font-medium text-gray-300">RPC URL</label>
+              <input
+                id="rpcUrl"
+                value="https://cloudflare-eth.com"
+                autocomplete="off"
+                spellcheck="false"
+                class="mt-2 w-full rounded-xl border border-gray-700 bg-gray-900/40 px-4 py-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+              />
+              <p class="mt-2 text-xs text-gray-400">
+                테스트넷(Sepolia 등) TX면 해당 체인의 RPC를 넣어야 합니다.
+              </p>
+            </div>
+
+            <div class="md:col-span-2">
+              <label for="trackHash" class="text-xs font-medium text-gray-300">TX Hash</label>
+              <div class="mt-2 flex flex-col gap-3 sm:flex-row">
+                <input
+                  id="trackHash"
+                  placeholder="0x..."
+                  autocomplete="off"
+                  spellcheck="false"
+                  class="flex-1 rounded-xl border border-gray-700 bg-gray-900/40 px-4 py-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                />
+                <button
+                  id="trackBtn"
+                  type="button"
+                  class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+                >
+                  추적
+                </button>
+              </div>
+
+              <div id="trackLoading" class="mt-4 hidden rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 text-sm text-indigo-200">
+                조회 중...
+              </div>
+              <div id="trackError" class="mt-4 hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"></div>
+            </div>
+          </div>
+
+          <div id="trackResult" class="mt-6 hidden">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+              <!-- 1. Basic info -->
+              <div class="rounded-2xl border border-gray-700 bg-gray-900/40 p-5">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="font-semibold text-gray-100">기본 정보</div>
+                  <a
+                    id="trackExplorer"
+                    class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-200 transition hover:bg-gray-700"
+                    href="#"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Explorer
+                  </a>
+                </div>
+                <dl class="mt-4 space-y-3 text-sm">
+                  <div>
+                    <dt class="text-xs text-gray-400">From</dt>
+                    <dd><code id="trackFrom" class="block break-all text-gray-100"></code></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-400">To</dt>
+                    <dd><code id="trackTo" class="block break-all text-gray-100"></code></dd>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <dt class="text-xs text-gray-400">Value</dt>
+                      <dd id="trackValue" class="font-semibold text-gray-100"></dd>
+                    </div>
+                    <div>
+                      <dt class="text-xs text-gray-400">Status</dt>
+                      <dd id="trackStatus" class="font-semibold text-gray-100"></dd>
+                    </div>
+                  </div>
+                </dl>
+              </div>
+
+              <!-- 2. Nonce -->
+              <div class="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-5">
+                <div class="font-semibold text-indigo-100">Nonce</div>
+                <div id="trackNonce" class="mt-4 text-5xl font-bold tracking-tight text-white"></div>
+                <p class="mt-4 text-sm text-indigo-100/90">
+                  이 트랜잭션의 일련번호입니다. 리플레이 공격을 방지합니다.
+                </p>
+              </div>
+
+              <!-- 3. Gas -->
+              <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
+                <div class="font-semibold text-amber-100">Gas</div>
+                <dl class="mt-4 space-y-3 text-sm">
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <dt class="text-xs text-amber-100/80">Gas Limit</dt>
+                      <dd id="trackGasLimit" class="font-semibold text-white"></dd>
+                    </div>
+                    <div>
+                      <dt class="text-xs text-amber-100/80">Gas Used</dt>
+                      <dd id="trackGasUsed" class="font-semibold text-white"></dd>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <dt class="text-xs text-amber-100/80">Gas Price</dt>
+                      <dd id="trackGasPrice" class="font-semibold text-white"></dd>
+                    </div>
+                    <div>
+                      <dt class="text-xs text-amber-100/80">수수료</dt>
+                      <dd id="trackFee" class="font-semibold text-white"></dd>
+                    </div>
+                  </div>
+                </dl>
+                <p class="mt-4 text-sm text-amber-100/90">
+                  Gas는 EVM 연산 비용입니다. 스팸 방지와 검증자 보상 역할을 합니다.
+                </p>
+              </div>
+
+              <!-- 4. Signature -->
+              <div class="rounded-2xl border border-fuchsia-500/30 bg-fuchsia-500/10 p-5">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="font-semibold text-fuchsia-100">Signature</div>
+                  <button
+                    id="ecrecoverBtn"
+                    type="button"
+                    class="rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled
+                  >
+                    서명 검증 (ecrecover)
+                  </button>
+                </div>
+                <dl class="mt-4 space-y-3 text-sm">
+                  <div>
+                    <dt class="text-xs text-fuchsia-100/80">r</dt>
+                    <dd><code id="sigR" class="block break-all font-mono text-fuchsia-50"></code></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-fuchsia-100/80">s</dt>
+                    <dd><code id="sigS" class="block break-all font-mono text-fuchsia-50"></code></dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-fuchsia-100/80">v</dt>
+                    <dd><code id="sigV" class="block break-all font-mono text-fuchsia-50"></code></dd>
+                  </div>
+                </dl>
+                <div id="ecrecoverResult" class="mt-4 hidden rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/10 p-3 text-sm text-fuchsia-100"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 5: L1/L2 Network Tree -->
+        <section class="rounded-2xl border border-gray-700 bg-gray-800 p-6 md:col-span-2">
+          <h2 class="text-lg font-semibold">L1/L2 네트워크 구조</h2>
+          <p class="mt-1 text-sm text-gray-300">Sepolia(L1) 위에 OP Stack L2 테스트넷이 분기됩니다.</p>
+
+          <div class="mt-6 flex flex-col items-center">
+            <!-- Top node -->
+            <div class="w-full max-w-xl rounded-2xl border border-blue-500/30 bg-blue-500/10 px-6 py-5 text-center">
+              <div class="text-sm font-semibold text-blue-100">Sepolia (L1)</div>
+              <div class="mt-1 text-xs text-blue-100/80">Chain ID: 11155111</div>
+            </div>
+
+            <!-- Vertical line -->
+            <div class="my-3 h-6 w-[2px] bg-gray-700"></div>
+
+            <!-- Branch -->
+            <div class="l1l2-branch w-full max-w-5xl pt-3">
+              <div class="flex flex-col gap-4 md:flex-row md:items-stretch md:justify-center">
+                <!-- Left node -->
+                <div class="mx-auto w-full max-w-xl md:mx-0 md:max-w-none md:w-1/2 md:px-3">
+                  <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-5 text-center">
+                    <div class="text-sm font-semibold text-emerald-100">Base Sepolia (L2)</div>
+                    <div class="mt-1 text-xs text-emerald-100/80">Chain ID: 84532</div>
+                  </div>
+                </div>
+
+                <!-- Right node -->
+                <div class="mx-auto w-full max-w-xl md:mx-0 md:max-w-none md:w-1/2 md:px-3">
+                  <div class="rounded-2xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-6 py-5 text-center">
+                    <div class="text-sm font-semibold text-fuchsia-100">GIWA Sepolia (L2)</div>
+                    <div class="mt-1 text-xs text-fuchsia-100/80">Chain ID: 91342</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p class="mt-6 max-w-3xl text-center text-sm text-gray-300">
+              Sepolia는 이더리움 L1 테스트넷, Base/GIWA는 OP Stack L2 롤업 테스트넷
+            </p>
+          </div>
+        </section>
+
+        <!-- Card 6: Bridge -->
+        <section class="rounded-2xl border border-gray-700 bg-gray-800 p-6 md:col-span-2">
+          <h2 class="text-lg font-semibold">Bridge</h2>
+          <p class="mt-1 text-sm text-gray-300">L1↔L2 자산 이동(브릿지) 학습 + TX 분석</p>
+
+          <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <!-- Left column -->
+            <div class="space-y-6">
+              <div class="rounded-2xl border border-gray-700 bg-gray-900/40 p-5">
+                <div class="font-semibold text-gray-100">브릿지 링크</div>
+                <div class="mt-4 space-y-3">
+                  <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                    <div>
+                      <div class="text-sm font-semibold text-emerald-100">Superbridge</div>
+                      <div class="mt-1 text-xs text-emerald-100/80">Base Sepolia ↔ Sepolia</div>
+                    </div>
+                    <a
+                      class="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                      href="https://superbridge.app/base-sepolia"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      이동 →
+                    </a>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-3 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4">
+                    <div>
+                      <div class="text-sm font-semibold text-fuchsia-100">GIWA Bridge</div>
+                      <div class="mt-1 text-xs text-fuchsia-100/80">GIWA Sepolia ↔ Sepolia</div>
+                    </div>
+                    <a
+                      class="shrink-0 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/60"
+                      href="https://bridge-giwa.vercel.app/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      이동 →
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-gray-700 bg-gray-900/40 p-5">
+                <div class="font-semibold text-gray-100">교육 노트</div>
+                <ul class="mt-4 space-y-2 text-sm text-gray-200">
+                  <li><span class="font-semibold">Deposit (L1→L2)</span>: Lock → Mint</li>
+                  <li><span class="font-semibold">Withdraw (L2→L1)</span>: Burn → Unlock</li>
+                </ul>
+                <div class="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+                  경고: <span class="font-semibold">L2→L1 출금은 7일 챌린지 기간 필요</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right column -->
+            <div class="space-y-4">
+              <div class="rounded-2xl border border-gray-700 bg-gray-900/40 p-5">
+                <div class="font-semibold text-gray-100">Bridge TX 분석</div>
+
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div>
+                    <label for="bridgeNet" class="text-xs font-medium text-gray-300">네트워크</label>
+                    <select
+                      id="bridgeNet"
+                      class="mt-2 w-full rounded-xl border border-gray-700 bg-gray-900/40 px-4 py-3 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                    >
+                      <option value="sepolia">Sepolia (L1)</option>
+                      <option value="base-sepolia">Base Sepolia (L2)</option>
+                      <option value="giwa-sepolia">GIWA Sepolia (L2)</option>
+                    </select>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label for="bridgeHash" class="text-xs font-medium text-gray-300">TX Hash</label>
+                    <div class="mt-2 flex flex-col gap-3 sm:flex-row">
+                      <input
+                        id="bridgeHash"
+                        placeholder="0x..."
+                        autocomplete="off"
+                        spellcheck="false"
+                        class="flex-1 rounded-xl border border-gray-700 bg-gray-900/40 px-4 py-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                      />
+                      <button
+                        id="bridgeAnalyzeBtn"
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+                      >
+                        분석
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="bridgeLoading" class="mt-4 hidden rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 text-sm text-indigo-200">
+                  분석 중...
+                </div>
+                <div id="bridgeError" class="mt-4 hidden rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"></div>
+              </div>
+
+              <div id="bridgeResult" class="hidden rounded-2xl border border-gray-700 bg-gray-900/40 p-5">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="font-semibold text-gray-100">분석 결과</div>
+                  <a
+                    id="bridgeExplorer"
+                    class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-200 transition hover:bg-gray-700"
+                    href="#"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Explorer
+                  </a>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div class="rounded-xl border border-gray-800 bg-gray-900/40 p-4">
+                    <div class="text-xs font-semibold text-gray-300">TX</div>
+                    <dl class="mt-3 space-y-3 text-sm">
+                      <div>
+                        <dt class="text-xs text-gray-400">From</dt>
+                        <dd><code id="bridgeFrom" class="block break-all text-gray-100"></code></dd>
+                      </div>
+                      <div>
+                        <dt class="text-xs text-gray-400">To</dt>
+                        <dd><code id="bridgeTo" class="block break-all text-gray-100"></code></dd>
+                      </div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <dt class="text-xs text-gray-400">Value</dt>
+                          <dd id="bridgeValue" class="font-semibold text-gray-100"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-xs text-gray-400">Status</dt>
+                          <dd id="bridgeStatus" class="font-semibold text-gray-100"></dd>
+                        </div>
+                      </div>
+                      <div>
+                        <dt class="text-xs text-gray-400">Nonce</dt>
+                        <dd id="bridgeNonce" class="font-semibold text-gray-100"></dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <div class="space-y-4">
+                    <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                      <div class="text-xs font-semibold text-amber-100">Gas</div>
+                      <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <div class="text-xs text-amber-100/80">Gas Used</div>
+                          <div id="bridgeGasUsed" class="mt-1 font-semibold text-white"></div>
+                        </div>
+                        <div>
+                          <div class="text-xs text-amber-100/80">수수료</div>
+                          <div id="bridgeFee" class="mt-1 font-semibold text-white"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4">
+                      <div class="text-xs font-semibold text-fuchsia-100">Signature</div>
+                      <dl class="mt-3 space-y-2 text-sm">
+                        <div>
+                          <div class="text-xs text-fuchsia-100/80">r</div>
+                          <code id="bridgeSigR" class="block break-all font-mono text-fuchsia-50"></code>
+                        </div>
+                        <div>
+                          <div class="text-xs text-fuchsia-100/80">s</div>
+                          <code id="bridgeSigS" class="block break-all font-mono text-fuchsia-50"></code>
+                        </div>
+                        <div>
+                          <div class="text-xs text-fuchsia-100/80">v</div>
+                          <code id="bridgeSigV" class="block break-all font-mono text-fuchsia-50"></code>
+                        </div>
+                      </dl>
+                    </div>
+
+                    <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
+                      <div class="text-xs font-semibold text-indigo-100">브릿지 분석</div>
+                      <dl class="mt-3 space-y-2 text-sm text-indigo-50">
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="text-xs text-indigo-100/80">방향</div>
+                          <div id="bridgeDirection" class="font-semibold"></div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="text-xs text-indigo-100/80">컨트랙트 상호작용</div>
+                          <div id="bridgeIsContract" class="font-semibold"></div>
+                        </div>
+                      </dl>
+                      <p id="bridgeExplain" class="mt-3 text-sm text-indigo-100/90"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="mt-10 text-xs text-gray-400">
+        <div class="rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3">
+          <span id="appFooter">Tip: 연결 후 MetaMask에서 계정/체인을 바꾸면 자동으로 정보가 갱신됩니다.</span>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // UI refs
+      const connectBtn = document.getElementById("connectBtn");
+      const installHint = document.getElementById("installHint");
+      const walletInfo = document.getElementById("walletInfo");
+      const walletError = document.getElementById("walletError");
+      const faucetWarn = document.getElementById("faucetWarn");
+      const faucetLink = document.getElementById("faucetLink");
+      const addressEl = document.getElementById("address");
+      const balanceEl = document.getElementById("balance");
+      const nonceEl = document.getElementById("nonce");
+      const connDot = document.getElementById("connDot");
+      const connText = document.getElementById("connText");
+      const appTitle = document.getElementById("appTitle");
+      const appSubtitle = document.getElementById("appSubtitle");
+      const appFooter = document.getElementById("appFooter");
+      const netBtnSepolia = document.getElementById("netBtnSepolia");
+      const netBtnBase = document.getElementById("netBtnBase");
+      const netBtnGiwa = document.getElementById("netBtnGiwa");
+      const copyAddrBtn = document.getElementById("copyAddrBtn");
+      const copyToast = document.getElementById("copyToast");
+      const toAddressInput = document.getElementById("toAddress");
+      const sendAmountInput = document.getElementById("sendAmount");
+      const previewBtn = document.getElementById("previewBtn");
+      const sendBtn = document.getElementById("sendBtn");
+      const previewPanel = document.getElementById("previewPanel");
+      const previewNonceEl = document.getElementById("previewNonce");
+      const previewToEl = document.getElementById("previewTo");
+      const gasLimitText = document.getElementById("gasLimitText");
+      const txLoading = document.getElementById("txLoading");
+      const txError = document.getElementById("txError");
+      const txResult = document.getElementById("txResult");
+      const txStatusBadge = document.getElementById("txStatusBadge");
+      const txHashEl = document.getElementById("txHash");
+      const txExplorer = document.getElementById("txExplorer");
+      const txNonceEl = document.getElementById("txNonce");
+      const txGasUsedEl = document.getElementById("txGasUsed");
+      const txGasPriceEl = document.getElementById("txGasPrice");
+      const txFeeEl = document.getElementById("txFee");
+      const rpcUrlInput = document.getElementById("rpcUrl");
+      const trackHashInput = document.getElementById("trackHash");
+      const trackBtn = document.getElementById("trackBtn");
+      const trackLoading = document.getElementById("trackLoading");
+      const trackError = document.getElementById("trackError");
+      const trackResult = document.getElementById("trackResult");
+      const trackExplorer = document.getElementById("trackExplorer");
+      const trackFrom = document.getElementById("trackFrom");
+      const trackTo = document.getElementById("trackTo");
+      const trackValue = document.getElementById("trackValue");
+      const trackStatus = document.getElementById("trackStatus");
+      const trackNonce = document.getElementById("trackNonce");
+      const trackGasLimit = document.getElementById("trackGasLimit");
+      const trackGasUsed = document.getElementById("trackGasUsed");
+      const trackGasPrice = document.getElementById("trackGasPrice");
+      const trackFee = document.getElementById("trackFee");
+      const sigR = document.getElementById("sigR");
+      const sigS = document.getElementById("sigS");
+      const sigV = document.getElementById("sigV");
+      const ecrecoverBtn = document.getElementById("ecrecoverBtn");
+      const ecrecoverResult = document.getElementById("ecrecoverResult");
+      const bridgeNet = document.getElementById("bridgeNet");
+      const bridgeHash = document.getElementById("bridgeHash");
+      const bridgeAnalyzeBtn = document.getElementById("bridgeAnalyzeBtn");
+      const bridgeLoading = document.getElementById("bridgeLoading");
+      const bridgeError = document.getElementById("bridgeError");
+      const bridgeResult = document.getElementById("bridgeResult");
+      const bridgeExplorer = document.getElementById("bridgeExplorer");
+      const bridgeFrom = document.getElementById("bridgeFrom");
+      const bridgeTo = document.getElementById("bridgeTo");
+      const bridgeValue = document.getElementById("bridgeValue");
+      const bridgeStatus = document.getElementById("bridgeStatus");
+      const bridgeNonce = document.getElementById("bridgeNonce");
+      const bridgeGasUsed = document.getElementById("bridgeGasUsed");
+      const bridgeFee = document.getElementById("bridgeFee");
+      const bridgeSigR = document.getElementById("bridgeSigR");
+      const bridgeSigS = document.getElementById("bridgeSigS");
+      const bridgeSigV = document.getElementById("bridgeSigV");
+      const bridgeDirection = document.getElementById("bridgeDirection");
+      const bridgeIsContract = document.getElementById("bridgeIsContract");
+      const bridgeExplain = document.getElementById("bridgeExplain");
+
+      let provider = null;
+      let signer = null;
+      let currentAddress = null;
+      let currentChainId = null;
+      const TRANSFER_GAS_LIMIT = 21000n;
+      let lastTracked = null; // { tx, txObj, chainId, hash }
+      let selectedNetworkKey = "sepolia";
+      let networkInfo = null;
+
+      const FALLBACK_NETWORK_INFO = {
+        sepolia: {
+          key: "sepolia",
+          name: "Sepolia",
+          subtitle: "Ethereum L1 Testnet",
+          chainId: 11155111,
+          rpcUrl: "https://rpc.sepolia.org",
+          explorerTxBase: "https://sepolia.etherscan.io/tx/",
+          faucetUrl: "https://sepoliafaucet.com/",
+          nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
+          addChain: {
+            chainName: "Sepolia",
+            rpcUrls: ["https://rpc.sepolia.org"],
+            blockExplorerUrls: ["https://sepolia.etherscan.io"],
+          },
+        },
+        "base-sepolia": {
+          key: "base-sepolia",
+          name: "Base Sepolia",
+          subtitle: "OP Stack L2 Testnet",
+          chainId: 84532,
+          rpcUrl: "https://sepolia.base.org",
+          explorerTxBase: "https://sepolia.basescan.org/tx/",
+          faucetUrl: "https://www.coinbase.com/faucets/base-ethereum-goerli-faucet", // best-effort
+          nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+          addChain: {
+            chainName: "Base Sepolia",
+            rpcUrls: ["https://sepolia.base.org"],
+            blockExplorerUrls: ["https://sepolia.basescan.org"],
+          },
+        },
+        "giwa-sepolia": {
+          key: "giwa-sepolia",
+          name: "GIWA Sepolia",
+          subtitle: "OP Stack L2 Testnet",
+          chainId: 91342,
+          rpcUrl: "https://sepolia-rpc.giwa.io",
+          explorerTxBase: "https://sepolia-explorer.giwa.io/tx/",
+          faucetUrl: "https://docs.giwa.io/giwa-chain/en/get-started/faucet",
+          nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+          addChain: {
+            chainName: "GIWA Sepolia",
+            rpcUrls: ["https://sepolia-rpc.giwa.io"],
+            blockExplorerUrls: ["https://sepolia-explorer.giwa.io"],
+          },
+        },
+      };
+
+      function chainIdToHex(chainId) {
+        const n = typeof chainId === "bigint" ? Number(chainId) : Number(chainId);
+        return `0x${n.toString(16)}`;
+      }
+
+      async function loadNetworkInfo() {
+        try {
+          const res = await fetch("/api/network-info", { cache: "no-store" });
+          if (!res.ok) throw new Error("server not ok");
+          const data = await res.json();
+          return data;
+        } catch {
+          return FALLBACK_NETWORK_INFO;
+        }
+      }
+
+      function getNet(key) {
+        return (networkInfo && networkInfo[key]) || FALLBACK_NETWORK_INFO[key];
+      }
+
+      function setActiveNetButton(key) {
+        const base = "rounded-xl px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-400/40";
+        const active = "bg-indigo-600 text-white";
+        const inactive = "text-gray-200 hover:bg-gray-700";
+        const map = {
+          sepolia: netBtnSepolia,
+          "base-sepolia": netBtnBase,
+          "giwa-sepolia": netBtnGiwa,
+        };
+        Object.entries(map).forEach(([k, btn]) => {
+          if (!btn) return;
+          btn.className = `${base} ${k === key ? active : inactive}`;
+        });
+      }
+
+      function updateAppUI(key) {
+        const net = getNet(key);
+        if (!net) return;
+        selectedNetworkKey = key;
+        setActiveNetButton(key);
+
+        appTitle.textContent = `Blockchain Lab #3 — ${net.name}`;
+        appSubtitle.textContent = `${net.subtitle} · ethers.js v6 + MetaMask`;
+        appFooter.textContent = `${net.name} 선택됨. MetaMask에서 계정/체인을 바꾸면 자동으로 정보가 갱신됩니다.`;
+        faucetLink.href = net.faucetUrl || "#";
+
+        // Default RPC for Card 3 tracker
+        if (rpcUrlInput) rpcUrlInput.value = net.rpcUrl || rpcUrlInput.value;
+        // Default network for Bridge analyzer
+        if (bridgeNet) bridgeNet.value = key;
+      }
+
+      async function switchOrAddChain(key) {
+        const injected = getInjectedEthereum();
+        if (!injected) throw new Error("MetaMask가 감지되지 않았습니다.");
+        const net = getNet(key);
+        if (!net) throw new Error("네트워크 정보가 없습니다.");
+
+        try {
+          await injected.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: chainIdToHex(net.chainId) }],
+          });
+        } catch (err) {
+          if (err?.code === 4902) {
+            const params = {
+              chainId: chainIdToHex(net.chainId),
+              chainName: net.addChain?.chainName || net.name,
+              rpcUrls: net.addChain?.rpcUrls || [net.rpcUrl].filter(Boolean),
+              nativeCurrency: net.nativeCurrency,
+              blockExplorerUrls: net.addChain?.blockExplorerUrls || (net.explorerTxBase ? [net.explorerTxBase.replace(/\/tx\/$/, "")] : []),
+            };
+            await injected.request({ method: "wallet_addEthereumChain", params: [params] });
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      async function onNetworkSelect(key) {
+        updateAppUI(key); // 1) UI update first (optimistic)
+        try {
+          await switchOrAddChain(key); // 2/3) switch or add
+          await refreshWalletCard(); // 4) refresh wallet state
+        } catch (err) {
+          showError(err?.message ? String(err.message) : "네트워크 전환에 실패했습니다.");
+        }
+      }
+
+      function getInjectedEthereum() {
+        const eth = window.ethereum;
+        if (!eth) return null;
+        if (eth.isMetaMask) return eth;
+        if (Array.isArray(eth.providers)) {
+          const mm = eth.providers.find((p) => p && p.isMetaMask);
+          return mm || eth;
+        }
+        return eth;
+      }
+
+      function isFileProtocol() {
+        return window.location?.protocol === "file:";
+      }
+
+      function setConnectedUI(isConnected) {
+        connDot.classList.toggle("bg-emerald-400", isConnected);
+        connDot.classList.toggle("bg-gray-500", !isConnected);
+        connText.textContent = isConnected ? "연결됨" : "미연결";
+
+        previewBtn.disabled = !isConnected;
+        sendBtn.disabled = !isConnected;
+      }
+
+      function showError(message) {
+        walletError.textContent = message;
+        walletError.classList.remove("hidden");
+      }
+
+      function clearError() {
+        walletError.textContent = "";
+        walletError.classList.add("hidden");
+      }
+
+      function showTxError(message) {
+        txError.textContent = message;
+        txError.classList.remove("hidden");
+      }
+
+      function clearTxPanels() {
+        txError.textContent = "";
+        txError.classList.add("hidden");
+        txResult.classList.add("hidden");
+        previewPanel.classList.add("hidden");
+      }
+
+      function setTrackLoading(isLoading) {
+        trackLoading.classList.toggle("hidden", !isLoading);
+        trackBtn.disabled = isLoading;
+        trackHashInput.disabled = isLoading;
+        rpcUrlInput.disabled = isLoading;
+      }
+
+      function showTrackError(message) {
+        trackError.textContent = message;
+        trackError.classList.remove("hidden");
+      }
+
+      function clearTrackPanels() {
+        trackError.textContent = "";
+        trackError.classList.add("hidden");
+        trackResult.classList.add("hidden");
+        ecrecoverResult.textContent = "";
+        ecrecoverResult.classList.add("hidden");
+        ecrecoverBtn.disabled = true;
+        lastTracked = null;
+      }
+
+      function setBridgeLoading(isLoading) {
+        bridgeLoading.classList.toggle("hidden", !isLoading);
+        bridgeAnalyzeBtn.disabled = isLoading;
+        bridgeHash.disabled = isLoading;
+        bridgeNet.disabled = isLoading;
+      }
+
+      function showBridgeError(message) {
+        bridgeError.textContent = message;
+        bridgeError.classList.remove("hidden");
+      }
+
+      function clearBridgePanels() {
+        bridgeError.textContent = "";
+        bridgeError.classList.add("hidden");
+        bridgeResult.classList.add("hidden");
+      }
+
+      function setTxLoading(isLoading) {
+        txLoading.classList.toggle("hidden", !isLoading);
+        previewBtn.disabled = isLoading || !currentAddress;
+        sendBtn.disabled = isLoading || !currentAddress;
+      }
+
+      function explorerTxUrl(chainId, hash) {
+        const id = typeof chainId === "bigint" ? Number(chainId) : Number(chainId ?? 0);
+        const baseByChainId = {
+          1: "https://etherscan.io",
+          5: "https://goerli.etherscan.io",
+          10: "https://optimistic.etherscan.io",
+          56: "https://bscscan.com",
+          137: "https://polygonscan.com",
+          42161: "https://arbiscan.io",
+          43114: "https://snowtrace.io",
+          11155111: "https://sepolia.etherscan.io",
+          80001: "https://mumbai.polygonscan.com",
+          84532: "https://sepolia.basescan.org",
+          91342: "https://sepolia-explorer.giwa.io",
+        };
+        const base = baseByChainId[id];
+        return base ? `${base}/tx/${hash}` : null;
+      }
+
+      function isValidTxHash(hash) {
+        return /^0x[a-fA-F0-9]{64}$/.test(hash);
+      }
+
+      function formatMaybeAddress(a) {
+        if (!a) return "-";
+        try {
+          return ethers.getAddress(a);
+        } catch {
+          return String(a);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function normalizeToAddress() {
+        const raw = String(toAddressInput.value || "").trim();
+        // ethers.getAddress throws if invalid
+        return ethers.getAddress(raw);
+      }
+
+      function readAmountEth() {
+        const raw = String(sendAmountInput.value ?? "").trim();
+        const n = Number(raw);
+        if (!Number.isFinite(n) || n <= 0) throw new Error("금액은 0보다 커야 합니다.");
+        return raw;
+      }
+
+      async function refreshWalletCard() {
+        if (!provider || !currentAddress) return;
+        clearError();
+
+        try {
+          // ethers.js v6 syntax required by prompt
+          const balance = await provider.getBalance(currentAddress);
+          const nonce = await provider.getTransactionCount(currentAddress);
+          const network = await provider.getNetwork();
+          currentChainId = network?.chainId ?? null;
+          // Keep UI in sync with the currently connected chain
+          if (currentChainId != null) {
+            const cid = typeof currentChainId === "bigint" ? Number(currentChainId) : Number(currentChainId);
+            const matchKey =
+              cid === FALLBACK_NETWORK_INFO.sepolia.chainId
+                ? "sepolia"
+                : cid === FALLBACK_NETWORK_INFO["base-sepolia"].chainId
+                  ? "base-sepolia"
+                  : cid === FALLBACK_NETWORK_INFO["giwa-sepolia"].chainId
+                    ? "giwa-sepolia"
+                    : null;
+            if (matchKey && matchKey !== selectedNetworkKey) updateAppUI(matchKey);
+          }
+          const eth = ethers.formatEther(balance);
+
+          addressEl.textContent = currentAddress;
+          balanceEl.textContent = `${Number(eth).toFixed(6)} ETH`;
+          nonceEl.textContent = String(nonce);
+
+          const isZero = balance === 0n;
+          faucetWarn.classList.toggle("hidden", !isZero);
+
+          walletInfo.classList.remove("hidden");
+          setConnectedUI(true);
+        } catch (err) {
+          showError(err?.message ? String(err.message) : "지갑 정보를 불러오지 못했습니다.");
+        }
+      }
+
+      async function connectWallet() {
+        clearError();
+        faucetWarn.classList.add("hidden");
+        installHint.classList.add("hidden");
+
+        const injected = getInjectedEthereum();
+        if (!injected) {
+          setConnectedUI(false);
+          walletInfo.classList.add("hidden");
+          installHint.classList.remove("hidden");
+          return;
+        }
+
+        connectBtn.disabled = true;
+        connectBtn.textContent = "연결 중...";
+
+        try {
+          provider = new ethers.BrowserProvider(injected);
+          await provider.send("eth_requestAccounts", []);
+          signer = await provider.getSigner();
+          currentAddress = await signer.getAddress();
+          await refreshWalletCard();
+          clearTxPanels();
+        } catch (err) {
+          setConnectedUI(false);
+          walletInfo.classList.add("hidden");
+
+          const msg =
+            err?.code === 4001
+              ? "사용자가 연결을 거부했습니다."
+              : err?.message
+                ? String(err.message)
+                : "지갑 연결에 실패했습니다.";
+          showError(msg);
+        } finally {
+          connectBtn.disabled = false;
+          connectBtn.textContent = "MetaMask 연결";
+        }
+      }
+
+      connectBtn.addEventListener("click", connectWallet);
+
+      netBtnSepolia?.addEventListener("click", () => onNetworkSelect("sepolia"));
+      netBtnBase?.addEventListener("click", () => onNetworkSelect("base-sepolia"));
+      netBtnGiwa?.addEventListener("click", () => onNetworkSelect("giwa-sepolia"));
+
+      copyAddrBtn.addEventListener("click", async () => {
+        if (!currentAddress) return;
+        try {
+          await navigator.clipboard.writeText(currentAddress);
+          copyToast.classList.remove("hidden");
+          setTimeout(() => copyToast.classList.add("hidden"), 1200);
+        } catch {
+          // ignore clipboard errors
+        }
+      });
+
+      previewBtn.addEventListener("click", async () => {
+        clearTxPanels();
+        if (!provider || !currentAddress) return;
+
+        try {
+          const to = normalizeToAddress();
+          readAmountEth();
+
+          const nonce = await provider.getTransactionCount(currentAddress);
+          gasLimitText.textContent = String(TRANSFER_GAS_LIMIT);
+          previewNonceEl.textContent = String(nonce);
+          previewToEl.textContent = to;
+          previewPanel.classList.remove("hidden");
+        } catch (err) {
+          showTxError(err?.message ? String(err.message) : "미리보기에 실패했습니다.");
+        }
+      });
+
+      sendBtn.addEventListener("click", async () => {
+        clearTxPanels();
+        if (!provider || !signer || !currentAddress) return;
+
+        let to;
+        let amountStr;
+        try {
+          to = normalizeToAddress();
+          amountStr = readAmountEth();
+        } catch (err) {
+          showTxError(err?.message ? String(err.message) : "입력값을 확인하세요.");
+          return;
+        }
+
+        setTxLoading(true);
+        try {
+          const tx = await signer.sendTransaction({
+            to,
+            value: ethers.parseEther(amountStr),
+          });
+
+          txHashEl.textContent = tx.hash;
+          txExplorer.href = "#";
+          const url = explorerTxUrl(currentChainId, tx.hash);
+          if (url) {
+            txExplorer.href = url;
+            txExplorer.classList.remove("pointer-events-none", "opacity-60");
+          } else {
+            txExplorer.classList.add("pointer-events-none", "opacity-60");
+          }
+
+          const receipt = await tx.wait();
+
+          const statusOk = receipt?.status === 1;
+          txStatusBadge.textContent = statusOk ? "성공" : "실패";
+          txStatusBadge.className =
+            "rounded-full border px-3 py-1 text-xs font-semibold " +
+            (statusOk
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+              : "border-rose-500/30 bg-rose-500/10 text-rose-200");
+
+          txNonceEl.textContent = String(tx.nonce ?? "");
+          txGasUsedEl.textContent = receipt?.gasUsed != null ? String(receipt.gasUsed) : "-";
+
+          const gasPrice = receipt?.effectiveGasPrice ?? receipt?.gasPrice ?? null;
+          txGasPriceEl.textContent = gasPrice != null ? `${ethers.formatUnits(gasPrice, "gwei")} gwei` : "-";
+
+          const fee = gasPrice != null && receipt?.gasUsed != null ? receipt.gasUsed * gasPrice : null;
+          txFeeEl.textContent = fee != null ? `${ethers.formatEther(fee)} ETH` : "-";
+
+          txResult.classList.remove("hidden");
+          await refreshWalletCard();
+        } catch (err) {
+          if (err?.code === 4001) {
+            showTxError("사용자가 트랜잭션을 거절했습니다");
+          } else if (err?.code === "INSUFFICIENT_FUNDS") {
+            showTxError("잔액이 부족합니다.");
+          } else if (String(err?.message || "").toLowerCase().includes("insufficient funds")) {
+            showTxError("잔액이 부족합니다.");
+          } else {
+            showTxError(err?.message ? String(err.message) : "송금에 실패했습니다.");
+          }
+        } finally {
+          setTxLoading(false);
+        }
+      });
+
+      async function trackTransaction() {
+        clearTrackPanels();
+
+        const rpcUrl = String(rpcUrlInput.value || "").trim();
+        const hashRaw = String(trackHashInput.value || "").trim();
+        const hash = hashRaw.toLowerCase().startsWith("0x") ? hashRaw : `0x${hashRaw}`;
+
+        if (!rpcUrl) {
+          showTrackError("RPC URL을 입력하세요.");
+          return;
+        }
+        if (!isValidTxHash(hash)) {
+          showTrackError("TX Hash 형식이 올바르지 않습니다. (0x + 64 hex)");
+          return;
+        }
+
+        setTrackLoading(true);
+        try {
+          const rpc = new ethers.JsonRpcProvider(rpcUrl);
+          const [network, tx, receipt] = await Promise.all([
+            rpc.getNetwork(),
+            rpc.getTransaction(hash),
+            rpc.getTransactionReceipt(hash),
+          ]);
+
+          const chainId = network?.chainId ?? null;
+          if (!tx) {
+            showTrackError("트랜잭션을 찾을 수 없습니다. (RPC/체인 또는 TX Hash를 확인하세요)");
+            return;
+          }
+
+          const status = receipt ? (receipt.status === 1 ? "Success" : "Fail") : "Pending";
+          const valueEth = tx.value != null ? ethers.formatEther(tx.value) : "0";
+
+          trackFrom.textContent = formatMaybeAddress(tx.from);
+          trackTo.textContent = tx.to ? formatMaybeAddress(tx.to) : "(Contract Creation)";
+          trackValue.textContent = `${Number(valueEth).toFixed(6)} ETH`;
+          trackStatus.textContent = status;
+          trackNonce.textContent = String(tx.nonce ?? "-");
+
+          const gasLimit = tx.gasLimit ?? null;
+          trackGasLimit.textContent = gasLimit != null ? String(gasLimit) : "-";
+
+          const gasUsed = receipt?.gasUsed ?? null;
+          trackGasUsed.textContent = gasUsed != null ? String(gasUsed) : "-";
+
+          const gasPrice = receipt?.effectiveGasPrice ?? receipt?.gasPrice ?? tx.gasPrice ?? null;
+          trackGasPrice.textContent = gasPrice != null ? `${ethers.formatUnits(gasPrice, "gwei")} gwei` : "-";
+
+          const fee = gasPrice != null && gasUsed != null ? gasUsed * gasPrice : null;
+          trackFee.textContent = fee != null ? `${ethers.formatEther(fee)} ETH` : "-";
+
+          // Explorer link (best-effort)
+          const url = explorerTxUrl(chainId, hash);
+          if (url) {
+            trackExplorer.href = url;
+            trackExplorer.classList.remove("pointer-events-none", "opacity-60");
+          } else {
+            trackExplorer.href = "#";
+            trackExplorer.classList.add("pointer-events-none", "opacity-60");
+          }
+
+          // Signature
+          let txObj = null;
+          try {
+            txObj = ethers.Transaction.from(tx);
+          } catch {
+            txObj = null;
+          }
+
+          const sig = txObj?.signature ?? tx.signature ?? null;
+          const r = sig?.r ?? tx.r ?? "-";
+          const s = sig?.s ?? tx.s ?? "-";
+          const v = sig?.v ?? tx.v ?? "-";
+          sigR.textContent = String(r ?? "-");
+          sigS.textContent = String(s ?? "-");
+          sigV.textContent = String(v ?? "-");
+
+          if (txObj?.unsignedHash && sig?.r && sig?.s && sig?.v != null) {
+            lastTracked = { tx, txObj, chainId, hash };
+            ecrecoverBtn.disabled = false;
+          }
+
+          trackResult.classList.remove("hidden");
+        } catch (err) {
+          showTrackError(err?.message ? String(err.message) : "조회에 실패했습니다.");
+        } finally {
+          setTrackLoading(false);
+        }
+      }
+
+      trackBtn.addEventListener("click", trackTransaction);
+      trackHashInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") trackTransaction();
+      });
+
+      async function analyzeBridgeTx() {
+        clearBridgePanels();
+        const key = String(bridgeNet.value || "");
+        const net = BRIDGE_NETWORKS[key];
+        if (!net) {
+          showBridgeError("네트워크 선택이 올바르지 않습니다.");
+          return;
+        }
+
+        const hashRaw = String(bridgeHash.value || "").trim();
+        const hash = hashRaw.toLowerCase().startsWith("0x") ? hashRaw : `0x${hashRaw}`;
+        if (!isValidTxHash(hash)) {
+          showBridgeError("TX Hash 형식이 올바르지 않습니다. (0x + 64 hex)");
+          return;
+        }
+
+        setBridgeLoading(true);
+        try {
+          const rpc = new ethers.JsonRpcProvider(net.rpcUrl);
+          const [tx, receipt] = await Promise.all([rpc.getTransaction(hash), rpc.getTransactionReceipt(hash)]);
+          if (!tx) {
+            showBridgeError("트랜잭션을 찾을 수 없습니다. (네트워크/체인 또는 TX Hash를 확인하세요)");
+            return;
+          }
+
+          const status = receipt ? (receipt.status === 1 ? "Success" : "Fail") : "Pending";
+          const valueEth = tx.value != null ? ethers.formatEther(tx.value) : "0";
+
+          bridgeFrom.textContent = formatMaybeAddress(tx.from);
+          bridgeTo.textContent = tx.to ? formatMaybeAddress(tx.to) : "(Contract Creation)";
+          bridgeValue.textContent = `${Number(valueEth).toFixed(6)} ETH`;
+          bridgeStatus.textContent = status;
+          bridgeNonce.textContent = String(tx.nonce ?? "-");
+
+          const gasUsed = receipt?.gasUsed ?? null;
+          bridgeGasUsed.textContent = gasUsed != null ? String(gasUsed) : "-";
+          const gasPrice = receipt?.effectiveGasPrice ?? receipt?.gasPrice ?? tx.gasPrice ?? null;
+          const fee = gasPrice != null && gasUsed != null ? gasUsed * gasPrice : null;
+          bridgeFee.textContent = fee != null ? `${ethers.formatEther(fee)} ETH` : "-";
+
+          // Signature
+          let txObj = null;
+          try {
+            txObj = ethers.Transaction.from(tx);
+          } catch {
+            txObj = null;
+          }
+          const sig = txObj?.signature ?? tx.signature ?? null;
+          bridgeSigR.textContent = String(sig?.r ?? tx.r ?? "-");
+          bridgeSigS.textContent = String(sig?.s ?? tx.s ?? "-");
+          bridgeSigV.textContent = String(sig?.v ?? tx.v ?? "-");
+
+          // Explorer
+          const url = explorerTxUrl(net.chainId, hash);
+          if (url) {
+            bridgeExplorer.href = url;
+            bridgeExplorer.classList.remove("pointer-events-none", "opacity-60");
+          } else {
+            bridgeExplorer.href = "#";
+            bridgeExplorer.classList.add("pointer-events-none", "opacity-60");
+          }
+
+          // Bridge heuristics
+          let contractInteraction = false;
+          if (!tx.to) {
+            contractInteraction = true;
+          } else if (tx.data && tx.data !== "0x") {
+            contractInteraction = true;
+          } else {
+            try {
+              const code = await rpc.getCode(tx.to);
+              contractInteraction = code && code !== "0x";
+            } catch {
+              // ignore
+            }
+          }
+
+          const isL1 = key === "sepolia";
+          const direction = contractInteraction
+            ? isL1
+              ? "L1 → L2 (Deposit 가능성)"
+              : "L2 → L1 (Withdraw 가능성)"
+            : "판단 불가";
+
+          bridgeDirection.textContent = direction;
+          bridgeIsContract.textContent = contractInteraction ? "예" : "아니오";
+
+          bridgeExplain.textContent = contractInteraction
+            ? isL1
+              ? "L1에서 브릿지 컨트랙트로 호출/전송(Deposit) 시 Lock → L2에서 Mint 흐름이 발생할 수 있습니다."
+              : "L2에서 브릿지 컨트랙트로 호출(Withdraw) 시 Burn → L1에서 Unlock로 이어질 수 있습니다. 보통 L2→L1 출금은 7일 챌린지 기간이 필요합니다."
+            : "EOA 간 단순 전송처럼 보입니다. 브릿지 트랜잭션은 보통 컨트랙트 호출(data 포함) 형태가 많습니다.";
+
+          bridgeResult.classList.remove("hidden");
+        } catch (err) {
+          showBridgeError(err?.message ? String(err.message) : "분석에 실패했습니다.");
+        } finally {
+          setBridgeLoading(false);
+        }
+      }
+
+      bridgeAnalyzeBtn.addEventListener("click", analyzeBridgeTx);
+      bridgeHash.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") analyzeBridgeTx();
+      });
+
+      ecrecoverBtn.addEventListener("click", () => {
+        ecrecoverResult.innerHTML = "";
+        ecrecoverResult.classList.add("hidden");
+        if (!lastTracked?.tx) return;
+
+        try {
+          const tx = lastTracked.tx;
+          const chainId = lastTracked.chainId ?? tx.chainId ?? null;
+
+          // Signature fields
+          const r = tx.r ?? lastTracked.txObj?.signature?.r ?? null;
+          const s = tx.s ?? lastTracked.txObj?.signature?.s ?? null;
+          const v = tx.v ?? lastTracked.txObj?.signature?.v ?? null;
+          if (!r || !s || v == null) throw new Error("서명(r/s/v)을 찾을 수 없습니다. (Pending TX일 수 있어요)");
+
+          // Reconstruct tx (ethers v6) and use rawTx.from (ecrecover inside)
+          const rawTx = new ethers.Transaction();
+          rawTx.type = tx.type ?? 0;
+          rawTx.to = tx.to ?? null;
+          rawTx.nonce = tx.nonce ?? 0;
+          rawTx.gasLimit = tx.gasLimit ?? 0n;
+          rawTx.data = tx.data ?? "0x";
+          rawTx.value = tx.value ?? 0n;
+          if (chainId != null) rawTx.chainId = chainId;
+
+          // Fees
+          if (rawTx.type === 2) {
+            rawTx.maxFeePerGas = tx.maxFeePerGas ?? 0n;
+            rawTx.maxPriorityFeePerGas = tx.maxPriorityFeePerGas ?? 0n;
+          } else {
+            rawTx.gasPrice = tx.gasPrice ?? 0n;
+          }
+
+          rawTx.signature = ethers.Signature.from({ r, s, v });
+
+          const recovered = rawTx.from; // triggers ecrecover internally
+          const expected = tx.from ? formatMaybeAddress(tx.from) : "-";
+          const rec = formatMaybeAddress(recovered);
+          const ok = expected !== "-" && rec.toLowerCase() === expected.toLowerCase();
+
+          const title = ok ? "서명 검증 성공 ✓" : "서명 검증 실패 ✗";
+          const color = ok
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+            : "border-rose-500/30 bg-rose-500/10 text-rose-100";
+          const desc = ok
+            ? "트랜잭션 내용을 RLP/Typed-Transaction으로 재구성한 뒤, 서명(r,s,v)로부터 복원된 주소가 from과 일치합니다."
+            : "복원된 주소가 from과 일치하지 않습니다. RPC/체인/RPC가 반환한 TX 필드(type/fee/chainId)가 맞는지 확인하세요.";
+
+          ecrecoverResult.innerHTML = `
+            <div class="rounded-xl border ${escapeHtml(color)} p-4">
+              <div class="text-sm font-semibold">${escapeHtml(title)}</div>
+              <div class="mt-2 text-xs opacity-90">${escapeHtml(desc)}</div>
+              <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="rounded-lg border border-white/10 bg-black/10 p-3">
+                  <div class="text-xs opacity-80">복원된 주소</div>
+                  <code class="mt-1 block break-all font-mono">${escapeHtml(rec)}</code>
+                </div>
+                <div class="rounded-lg border border-white/10 bg-black/10 p-3">
+                  <div class="text-xs opacity-80">TX from</div>
+                  <code class="mt-1 block break-all font-mono">${escapeHtml(expected)}</code>
+                </div>
+              </div>
+            </div>
+          `;
+          ecrecoverResult.classList.remove("hidden");
+        } catch (err) {
+          const msg = err?.message ? String(err.message) : "서명 검증에 실패했습니다.";
+          ecrecoverResult.innerHTML = `
+            <div class="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-100">
+              <div class="text-sm font-semibold">서명 검증 실패 ✗</div>
+              <div class="mt-2 text-xs opacity-90">${escapeHtml(msg)}</div>
+            </div>
+          `;
+          ecrecoverResult.classList.remove("hidden");
+        }
+      });
+
+      // React to MetaMask events
+      function wireEthereumEvents() {
+        if (!window.ethereum?.on) return;
+
+        window.ethereum.on("accountsChanged", async (accounts) => {
+          if (!accounts || accounts.length === 0) {
+            currentAddress = null;
+            walletInfo.classList.add("hidden");
+            setConnectedUI(false);
+            clearTxPanels();
+            return;
+          }
+          currentAddress = accounts[0];
+          await refreshWalletCard();
+          clearTxPanels();
+        });
+
+        window.ethereum.on("chainChanged", async () => {
+          // Recreate provider on chain change for safety
+          const injected = getInjectedEthereum();
+          if (!injected) return;
+          provider = new ethers.BrowserProvider(injected);
+          try {
+            signer = await provider.getSigner();
+            currentAddress = await signer.getAddress();
+            await refreshWalletCard();
+            clearTxPanels();
+          } catch {
+            // ignore
+          }
+        });
+
+        window.ethereum.on("disconnect", () => {
+          currentAddress = null;
+          walletInfo.classList.add("hidden");
+          setConnectedUI(false);
+          clearTxPanels();
+        });
+      }
+
+      // Initialize initial state
+      (function init() {
+        setConnectedUI(false);
+        setActiveNetButton(selectedNetworkKey);
+        const tryInitInjected = async () => {
+          const injected = getInjectedEthereum();
+          if (!injected) return false;
+          // If the site was previously authorized, auto-hydrate wallet state without prompting.
+          try {
+            provider = new ethers.BrowserProvider(injected);
+            // load network metadata and hydrate UI (with fallback if server fails)
+            if (!networkInfo) networkInfo = await loadNetworkInfo();
+            updateAppUI(selectedNetworkKey);
+            const accounts = await provider.send("eth_accounts", []);
+            if (accounts && accounts.length > 0) {
+              signer = await provider.getSigner();
+              currentAddress = accounts[0];
+              await refreshWalletCard();
+            }
+          } catch {
+            // ignore
+          }
+          wireEthereumEvents();
+          return true;
+        };
+
+        // MetaMask injection can be delayed; wait briefly before declaring "not detected".
+        if (isFileProtocol()) {
+          // Still attempt detection, but show hint proactively for file://
+          installHint.classList.remove("hidden");
+        }
+
+        // Listen for MetaMask init event if it arrives later.
+        window.addEventListener(
+          "ethereum#initialized",
+          () => {
+            installHint.classList.add("hidden");
+            void tryInitInjected();
+          },
+          { once: true }
+        );
+
+        // Immediate try, then fallback after short timeout.
+        void (async () => {
+          if (!networkInfo) networkInfo = await loadNetworkInfo();
+          updateAppUI(selectedNetworkKey);
+          const ok = await tryInitInjected();
+          if (ok) {
+            installHint.classList.add("hidden");
+            return;
+          }
+          setTimeout(async () => {
+            const ok2 = await tryInitInjected();
+            if (!ok2) installHint.classList.remove("hidden");
+            else installHint.classList.add("hidden");
+          }, 1200);
+        })();
+      })();
+    </script>
+  </body>
+</html>
