@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solidity Lab - 블록체인 실습 환경</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-deep:#0a0e27;--bg-surface:#111633;--bg-elevated:#1a1f4a;--bg-hover:#222860;
+  --neon-cyan:#00d4ff;--neon-purple:#7c3aed;--neon-green:#10b981;--neon-orange:#f59e0b;--neon-red:#ef4444;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --border:#2a2f5a;--border-bright:#3a3f7a;
+  --font-code:'Fira Code','Consolas','Courier New',monospace;
+  --font-ui:'Segoe UI','Malgun Gothic',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font-ui);background:var(--bg-deep);color:var(--text-primary)}
+button{cursor:pointer;font-family:var(--font-ui);border:none;outline:none}
+input{font-family:var(--font-ui);outline:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg-deep)}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--neon-cyan)}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes neonPulse{0%,100%{box-shadow:0 0 5px var(--neon-cyan),0 0 10px rgba(0,212,255,.3)}50%{box-shadow:0 0 15px var(--neon-cyan),0 0 30px rgba(0,212,255,.5)}}
+@keyframes miningPulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.8}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes highlightChange{0%{background:rgba(16,185,129,.3)}100%{background:transparent}}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes chainFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* ===== CANVAS BG ===== */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ===== LAYOUT ===== */
+.page{display:none;position:relative;z-index:1;height:100vh;animation:fadeIn .3s ease}
+.page.active{display:flex;flex-direction:column}
+
+/* ===== HEADER ===== */
+.header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg-surface);border-bottom:1px solid var(--border);min-height:44px;flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-nav{display:flex;gap:4px}
+.header-nav button{padding:4px 12px;border-radius:6px;background:transparent;color:var(--text-secondary);font-size:13px;transition:.2s}
+.header-nav button:hover{background:var(--bg-hover);color:var(--text-primary)}
+.header-nav button.active{background:var(--bg-elevated);color:var(--neon-cyan)}
+.header-right{display:flex;align-items:center;gap:12px}
+.header-right .progress-text{font-size:12px;color:var(--text-muted)}
+.shortcut-btn{padding:4px 8px;border-radius:4px;background:var(--bg-elevated);color:var(--text-muted);font-size:11px;transition:.2s}
+.shortcut-btn:hover{color:var(--neon-cyan)}
+.reset-btn{padding:4px 10px;border-radius:4px;background:rgba(239,68,68,.15);color:var(--neon-red);font-size:11px;transition:.2s}
+.reset-btn:hover{background:rgba(239,68,68,.25)}
+
+/* ===== LAUNCHER PAGE ===== */
+#launcher{justify-content:center;align-items:center;overflow-y:auto}
+.launcher-container{text-align:center;padding:40px 20px;max-width:1000px;width:100%}
+.launcher-title{font-size:40px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple),var(--neon-green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.launcher-subtitle{color:var(--text-secondary);font-size:16px;margin-bottom:48px}
+.lab-cards{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;position:relative}
+.chain-link{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--border-bright);font-size:28px;animation:chainFloat 3s ease-in-out infinite;display:none}
+.lab-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:280px;text-align:left;transition:all .3s ease;position:relative;overflow:hidden}
+.lab-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));opacity:0;transition:.3s}
+.lab-card:hover{transform:translateY(-8px);border-color:var(--neon-cyan);box-shadow:0 8px 30px rgba(0,212,255,.15)}
+.lab-card:hover::before{opacity:1}
+.lab-card.mining{animation:miningPulse .6s ease 3}
+.lab-card-icon{font-size:36px;margin-bottom:12px}
+.lab-card-num{font-size:11px;color:var(--neon-cyan);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+.lab-card h3{font-size:18px;margin-bottom:8px;color:var(--text-primary)}
+.lab-card p{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
+.lab-card-meta{display:flex;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:12px;flex-wrap:wrap}
+.lab-card-meta span{display:flex;align-items:center;gap:4px}
+.lab-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.lab-card-tags span{padding:2px 8px;border-radius:10px;font-size:10px;background:var(--bg-elevated);color:var(--text-muted);border:1px solid var(--border)}
+.lab-card-progress{height:4px;background:var(--bg-deep);border-radius:2px;overflow:hidden}
+.lab-card-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-green));border-radius:2px;transition:width .5s ease}
+.lab-card.locked{opacity:.4;pointer-events:none}
+.lab-card.locked::after{content:'🔒';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:40px}
+
+/* ===== LAB PAGE ===== */
+#lab1 .lab-body{display:flex;flex:1;overflow:hidden}
+
+/* ===== SUB TABS ===== */
+.sub-tabs{display:flex;gap:2px;padding:0 16px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.sub-tab{padding:8px 16px;font-size:13px;color:var(--text-muted);background:transparent;border-bottom:2px solid transparent;transition:.2s;position:relative}
+.sub-tab:hover{color:var(--text-secondary)}
+.sub-tab.active{color:var(--neon-cyan);border-bottom-color:var(--neon-cyan)}
+.sub-tab .check{color:var(--neon-green);margin-left:6px;font-size:12px}
+
+/* ===== LEFT: CODE EDITOR ===== */
+.panel-left{width:38%;min-width:320px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--bg-deep)}
+.editor-header{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.editor-filename{font-size:12px;color:var(--text-muted);font-family:var(--font-code)}
+.editor-actions{display:flex;gap:4px}
+.editor-actions button{padding:3px 8px;border-radius:4px;font-size:11px;background:var(--bg-elevated);color:var(--text-muted);transition:.2s}
+.editor-actions button:hover{color:var(--neon-cyan);background:var(--bg-hover)}
+.editor-wrap{flex:1;display:flex;overflow:hidden;position:relative}
+.line-numbers{padding:10px 0;text-align:right;font-family:var(--font-code);font-size:13px;line-height:1.6;color:var(--text-muted);user-select:none;min-width:40px;padding-right:8px;background:var(--bg-surface);overflow:hidden;flex-shrink:0}
+.code-area{position:relative;flex:1;overflow:auto}
+.code-highlight{position:absolute;top:0;left:0;right:0;padding:10px 12px;font-family:var(--font-code);font-size:13px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;pointer-events:none;color:transparent}
+.code-textarea{display:block;width:100%;height:100%;padding:10px 12px;font-family:var(--font-code);font-size:13px;line-height:1.6;background:transparent;color:transparent;caret-color:var(--text-primary);border:none;resize:none;white-space:pre-wrap;word-wrap:break-word;position:relative;z-index:1}
+.code-textarea::selection{background:rgba(0,212,255,.2)}
+.editor-footer{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:var(--bg-surface);border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);flex-shrink:0}
+
+/* Syntax colors */
+.sh-keyword{color:var(--neon-cyan)}
+.sh-type{color:var(--neon-purple)}
+.sh-string{color:var(--neon-green)}
+.sh-number{color:var(--neon-orange)}
+.sh-comment{color:var(--text-muted);font-style:italic}
+.sh-function{color:#60a5fa}
+.sh-modifier{color:#f472b6}
+.sh-punctuation{color:var(--text-secondary)}
+.sh-operator{color:var(--neon-orange)}
+.sh-visibility{color:var(--neon-cyan)}
+
+/* ===== CENTER: CONTROL PANEL ===== */
+.panel-center{width:28%;min-width:240px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--bg-surface);overflow-y:auto}
+.ctrl-section{padding:12px;border-bottom:1px solid var(--border)}
+.ctrl-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px}
+.btn-compile{width:100%;padding:10px;border-radius:8px;background:linear-gradient(135deg,var(--neon-cyan),#0091b3);color:#fff;font-size:14px;font-weight:600;transition:.2s;margin-bottom:6px}
+.btn-compile:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-compile:active{transform:translateY(0)}
+.btn-compile:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-deploy{width:100%;padding:10px;border-radius:8px;background:linear-gradient(135deg,var(--neon-orange),#d97706);color:#fff;font-size:14px;font-weight:600;transition:.2s}
+.btn-deploy:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-deploy:active{transform:translateY(0)}
+.btn-deploy:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.account-select{width:100%;padding:8px;border-radius:6px;background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border);font-size:12px;font-family:var(--font-code)}
+.account-info{margin-top:8px;font-size:12px;color:var(--text-secondary);line-height:1.8}
+.account-info .label{color:var(--text-muted);font-size:11px}
+.account-info .value{color:var(--neon-green);font-family:var(--font-code)}
+.blockchain-info{font-size:12px;color:var(--text-secondary);line-height:2}
+.blockchain-info .val{color:var(--neon-cyan);font-family:var(--font-code)}
+.guide-steps{list-style:none;counter-reset:step}
+.guide-steps li{counter-increment:step;padding:6px 0 6px 28px;font-size:12px;color:var(--text-secondary);line-height:1.5;position:relative}
+.guide-steps li::before{content:counter(step);position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:50%;background:var(--bg-elevated);color:var(--neon-cyan);font-size:11px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.guide-hint{margin-top:8px;padding:8px 12px;border-radius:6px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);font-size:12px;color:var(--neon-cyan);line-height:1.5}
+.challenge-box{margin-top:8px;padding:12px;border-radius:8px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2)}
+.challenge-box h4{font-size:13px;color:var(--neon-purple);margin-bottom:6px}
+.challenge-box p{font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:4px}
+.challenge-table{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0}
+.challenge-table th,.challenge-table td{padding:4px 6px;border:1px solid var(--border);text-align:left}
+.challenge-table th{background:var(--bg-elevated);color:var(--neon-cyan)}
+.challenge-table td{color:var(--text-secondary)}
+.btn-hint{padding:6px 12px;border-radius:6px;font-size:12px;background:rgba(124,58,237,.15);color:var(--neon-purple);margin-top:8px;transition:.2s}
+.btn-hint:hover{background:rgba(124,58,237,.25)}
+.btn-apply-hint{padding:6px 12px;border-radius:6px;font-size:12px;background:rgba(16,185,129,.15);color:var(--neon-green);margin-top:4px;transition:.2s;display:none}
+.btn-apply-hint:hover{background:rgba(16,185,129,.25)}
+
+/* ===== RIGHT: INTERACTION PANEL ===== */
+.panel-right{flex:1;min-width:280px;display:flex;flex-direction:column;background:var(--bg-deep);overflow-y:auto}
+.interact-header{padding:10px 12px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.interact-header h3{font-size:13px;color:var(--text-primary)}
+.interact-header .contract-addr{font-size:11px;color:var(--neon-cyan);font-family:var(--font-code);margin-top:2px}
+.interact-body{flex:1;padding:12px;overflow-y:auto}
+.interact-empty{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.interact-empty .icon{font-size:40px;margin-bottom:12px}
+.interact-empty p{font-size:13px;line-height:1.8}
+.interact-empty .steps{font-size:12px;color:var(--text-muted);margin-top:12px}
+.func-group{margin-bottom:16px;animation:slideUp .3s ease}
+.func-group-title{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.func-item{margin-bottom:8px}
+.func-row{display:flex;gap:6px;align-items:center}
+.func-btn{padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--font-code);transition:.2s;flex-shrink:0}
+.func-btn.view{background:rgba(16,185,129,.15);color:var(--neon-green);border:1px solid rgba(16,185,129,.3)}
+.func-btn.view:hover{background:rgba(16,185,129,.25)}
+.func-btn.write{background:rgba(245,158,11,.15);color:var(--neon-orange);border:1px solid rgba(245,158,11,.3)}
+.func-btn.write:hover{background:rgba(245,158,11,.25)}
+.func-input{flex:1;padding:7px 10px;border-radius:6px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);font-size:12px;font-family:var(--font-code)}
+.func-input::placeholder{color:var(--text-muted)}
+.func-result{margin-top:6px;padding:8px 12px;border-radius:6px;font-size:12px;font-family:var(--font-code);line-height:1.6;animation:slideUp .2s ease}
+.func-result.success{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--neon-green)}
+.func-result.tx{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--neon-orange)}
+.func-result.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--neon-red)}
+.state-section{margin-top:16px;padding:12px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border)}
+.state-section h4{font-size:12px;color:var(--text-muted);margin-bottom:8px}
+.state-var{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:4px;margin-bottom:4px;font-size:12px;transition:background .5s}
+.state-var.changed{animation:highlightChange 1.5s ease}
+.state-var .var-name{color:var(--text-primary);font-family:var(--font-code)}
+.state-var .var-meta{font-size:10px;color:var(--text-muted)}
+.state-var .var-value{color:var(--neon-green);font-family:var(--font-code)}
+
+/* ===== CONSOLE ===== */
+.console-panel{flex-shrink:0;background:var(--bg-surface);border-top:1px solid var(--border);display:flex;flex-direction:column;z-index:10}
+.console-header{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:var(--bg-elevated);cursor:pointer;user-select:none;min-height:28px}
+.console-header h4{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.console-header .badge{background:var(--neon-cyan);color:var(--bg-deep);font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700}
+.console-header-actions{display:flex;gap:4px}
+.console-header-actions button{padding:2px 6px;border-radius:3px;background:transparent;color:var(--text-muted);font-size:11px;transition:.2s}
+.console-header-actions button:hover{color:var(--text-primary)}
+.console-body{height:0;overflow-y:auto;transition:height .2s ease;font-family:var(--font-code);font-size:11px}
+.console-body.open{height:150px}
+.console-body.maximized{height:300px}
+.log-entry{padding:4px 12px;border-bottom:1px solid rgba(42,47,90,.5);cursor:pointer;transition:.15s}
+.log-entry:hover{background:var(--bg-hover)}
+.log-entry .log-main{display:flex;align-items:center;gap:8px}
+.log-entry .log-time{color:var(--text-muted);font-size:10px;flex-shrink:0}
+.log-entry .log-icon{flex-shrink:0}
+.log-entry .log-msg{color:var(--text-secondary);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-entry.success .log-msg{color:var(--neon-green)}
+.log-entry.error .log-msg{color:var(--neon-red)}
+.log-entry.warning .log-msg{color:var(--neon-orange)}
+.log-entry.tx .log-msg{color:var(--neon-orange)}
+.log-entry.info .log-msg{color:var(--neon-cyan)}
+.log-detail{display:none;padding:4px 0 4px 32px;font-size:10px;color:var(--text-muted);line-height:1.6}
+.log-entry.expanded .log-detail{display:block}
+
+/* ===== TOAST ===== */
+.toast-container{position:fixed;top:60px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px;animation:toastIn .3s ease;min-width:220px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.toast.removing{animation:toastOut .3s ease forwards}
+.toast.success{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--neon-green)}
+.toast.error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--neon-red)}
+.toast.info{background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);color:var(--neon-cyan)}
+.toast.warning{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--neon-orange)}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center;animation:fadeIn .2s}
+.modal-overlay.active{display:flex}
+.modal{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:480px;width:90%;animation:slideUp .3s ease;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;margin-bottom:16px;color:var(--neon-cyan)}
+.modal table{width:100%;border-collapse:collapse;font-size:13px}
+.modal table th,.modal table td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.modal table th{color:var(--text-muted)}
+.modal table td:first-child{font-family:var(--font-code);color:var(--neon-cyan)}
+.modal table td:last-child{color:var(--text-secondary)}
+.modal-close{margin-top:16px;padding:8px 20px;border-radius:6px;background:var(--bg-elevated);color:var(--text-secondary);font-size:13px}
+.modal-close:hover{color:var(--text-primary)}
+
+/* ===== SPINNER ===== */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:4px}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== SHORTCUT MODAL ===== -->
+<div class="modal-overlay" id="shortcutModal">
+  <div class="modal">
+    <h3>⌨️ 키보드 단축키</h3>
+    <table>
+      <tr><th>단축키</th><th>기능</th></tr>
+      <tr><td>1</td><td>Lab 1 이동</td></tr>
+      <tr><td>Escape</td><td>런처로 복귀</td></tr>
+      <tr><td>Ctrl+Enter</td><td>컴파일</td></tr>
+      <tr><td>Ctrl+Shift+D</td><td>배포</td></tr>
+      <tr><td>Ctrl+/</td><td>단축키 도움말</td></tr>
+      <tr><td>Ctrl+`</td><td>콘솔 토글</td></tr>
+    </table>
+    <button class="modal-close" onclick="document.getElementById('shortcutModal').classList.remove('active')">닫기</button>
+  </div>
+</div>
+
+<!-- ===== LAUNCHER PAGE ===== -->
+<div class="page active" id="launcher">
+  <div class="header">
+    <div class="header-left">
+      <span class="header-logo">⛓️ Solidity Lab</span>
+    </div>
+    <div class="header-right">
+      <span class="progress-text" id="globalProgress">0/3 Labs</span>
+      <button class="shortcut-btn" onclick="document.getElementById('shortcutModal').classList.toggle('active')">Ctrl+/ 단축키</button>
+      <button class="reset-btn" onclick="resetAllProgress()">초기화</button>
+    </div>
+  </div>
+  <div class="launcher-container">
+    <h1 class="launcher-title">Solidity Lab</h1>
+    <p class="launcher-subtitle">블록체인 스마트 컨트랙트 실습 환경</p>
+    <div class="lab-cards">
+      <div class="lab-card" id="labCard1" onclick="navigateTo('lab1')">
+        <div class="lab-card-icon">📝</div>
+        <div class="lab-card-num">Lab 01</div>
+        <h3>HelloWorld & HelloNumber</h3>
+        <p>Solidity의 기본 문법을 배웁니다. 상태 변수, 가시성, getter/setter 함수를 실습합니다.</p>
+        <div class="lab-card-meta">
+          <span>⭐ 기초 ★☆☆</span>
+          <span>⏱ ~15분</span>
+        </div>
+        <div class="lab-card-tags">
+          <span>string</span><span>public</span><span>view</span><span>int</span><span>private</span>
+        </div>
+        <div class="lab-card-progress"><div class="lab-card-progress-fill" id="lab1ProgressBar" style="width:0%"></div></div>
+      </div>
+      <div class="chain-link" style="display:block">🔗</div>
+      <div class="lab-card locked">
+        <div class="lab-card-icon">🔄</div>
+        <div class="lab-card-num">Lab 02</div>
+        <h3>Counter & Storage</h3>
+        <p>상태 변경 함수와 이벤트를 학습합니다. 카운터 컨트랙트를 만들어 봅니다.</p>
+        <div class="lab-card-meta">
+          <span>⭐ 초급 ★★☆</span>
+          <span>⏱ ~20분</span>
+        </div>
+        <div class="lab-card-tags">
+          <span>uint</span><span>event</span><span>emit</span><span>require</span>
+        </div>
+        <div class="lab-card-progress"><div class="lab-card-progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="chain-link" style="display:block">🔗</div>
+      <div class="lab-card locked">
+        <div class="lab-card-icon">🏦</div>
+        <div class="lab-card-num">Lab 03</div>
+        <h3>SimpleBank</h3>
+        <p>입출금 기능이 있는 은행 컨트랙트를 구현합니다. mapping과 payable을 학습합니다.</p>
+        <div class="lab-card-meta">
+          <span>⭐ 중급 ★★★</span>
+          <span>⏱ ~30분</span>
+        </div>
+        <div class="lab-card-tags">
+          <span>mapping</span><span>payable</span><span>msg.value</span><span>modifier</span>
+        </div>
+        <div class="lab-card-progress"><div class="lab-card-progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LAB 1 PAGE ===== -->
+<div class="page" id="lab1">
+  <div class="header">
+    <div class="header-left">
+      <span class="header-logo" style="cursor:pointer" onclick="navigateTo('launcher')">⛓️ Solidity Lab</span>
+      <div class="header-nav">
+        <button class="active" onclick="navigateTo('launcher')">🏠 런처</button>
+        <button class="active">Lab 1</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="progress-text" id="lab1Progress">0/3 완료</span>
+      <button class="shortcut-btn" onclick="document.getElementById('shortcutModal').classList.toggle('active')">Ctrl+/</button>
+    </div>
+  </div>
+  <div class="sub-tabs" id="subTabs">
+    <button class="sub-tab active" data-tab="0" onclick="switchSubTab(0)">1. HelloWorld 기본<span class="check" id="check0" style="display:none">✓</span></button>
+    <button class="sub-tab" data-tab="1" onclick="switchSubTab(1)">2. HelloWorld 확장<span class="check" id="check1" style="display:none">✓</span></button>
+    <button class="sub-tab" data-tab="2" onclick="switchSubTab(2)">3. HelloNumber<span class="check" id="check2" style="display:none">✓</span></button>
+  </div>
+  <div class="lab-body">
+    <!-- LEFT: CODE EDITOR -->
+    <div class="panel-left">
+      <div class="editor-header">
+        <span class="editor-filename" id="editorFilename">HelloWorld.sol</span>
+        <div class="editor-actions">
+          <button onclick="resetCode()" title="코드 초기화">↺ 초기화</button>
+          <button onclick="copyCode()" title="코드 복사">📋 복사</button>
+        </div>
+      </div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="lineNumbers"></div>
+        <div class="code-area" id="codeArea">
+          <div class="code-highlight" id="codeHighlight"></div>
+          <textarea class="code-textarea" id="codeTextarea" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div class="editor-footer">
+        <span id="cursorPos">줄 1, 열 1</span>
+        <span>Solidity ^0.8.26</span>
+      </div>
+    </div>
+    <!-- CENTER: CONTROL PANEL -->
+    <div class="panel-center">
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">⚡ 컴파일 & 배포</div>
+        <button class="btn-compile" id="btnCompile" onclick="doCompile()">🔨 컴파일</button>
+        <button class="btn-deploy" id="btnDeploy" onclick="doDeploy()" disabled>🚀 배포</button>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">👤 계정</div>
+        <select class="account-select" id="accountSelect" onchange="switchAccount()"></select>
+        <div class="account-info">
+          <div><span class="label">주소: </span><span class="value" id="accAddr"></span></div>
+          <div><span class="label">잔액: </span><span class="value" id="accBalance"></span></div>
+          <div><span class="label">msg.sender: </span><span class="value" id="accSender"></span></div>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">⛓️ 블록체인 상태</div>
+        <div class="blockchain-info">
+          <div>블록 번호: <span class="val" id="blockNum">1</span></div>
+          <div>Gas Price: <span class="val">20 Gwei</span></div>
+          <div>Chain ID: <span class="val">1337</span></div>
+          <div>Timestamp: <span class="val" id="bcTimestamp"></span></div>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">📖 실습 가이드</div>
+        <div id="guideContent"></div>
+      </div>
+    </div>
+    <!-- RIGHT: INTERACTION PANEL -->
+    <div class="panel-right">
+      <div class="interact-header">
+        <h3>🔗 컨트랙트 인터랙션</h3>
+        <div class="contract-addr" id="contractAddr"></div>
+      </div>
+      <div class="interact-body" id="interactBody">
+        <div class="interact-empty">
+          <div class="icon">📦</div>
+          <p>컨트랙트를 배포하세요</p>
+          <div class="steps">1️⃣ 코드 확인 → 2️⃣ 컴파일 → 3️⃣ 배포</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- CONSOLE -->
+  <div class="console-panel">
+    <div class="console-header" onclick="toggleConsole()">
+      <h4>🖥 콘솔 <span class="badge" id="logCount">0</span></h4>
+      <div class="console-header-actions">
+        <button onclick="event.stopPropagation();clearConsole()">클리어</button>
+        <button onclick="event.stopPropagation();maximizeConsole()">최대화</button>
+        <button id="consoleToggleBtn">▲</button>
+      </div>
+    </div>
+    <div class="console-body open" id="consoleBody"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   SOLIDITY LAB - COMPLETE APPLICATION
+   ================================================================ */
+
+// ===== DEFAULT CODES =====
+const DEFAULT_CODES = [
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract HelloWorld {
+    string public greet = "Hello World";
+}`,
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract HelloWorld {
+    string private _greeting = "Hello, World!";
+
+    function greet() public view returns (string memory) {
+        return _greeting;
+    }
+
+    function setGreeting(string memory newGreeting) public {
+        _greeting = newGreeting;
+    }
+}`,
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract HelloNumber {
+    int public number = 10;
+}`
+];
+
+const HINT_CODE = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract HelloNumber {
+    int private _number = 10;
+
+    function getNumber() public view returns (int) {
+        return _number;
+    }
+
+    function setNumber(int newNumber) public {
+        _number = newNumber;
+    }
+}`;
+
+const TAB_NAMES = ['HelloWorld.sol', 'HelloWorld.sol', 'HelloNumber.sol'];
+
+// ===== BLOCKCHAIN ENGINE =====
+const BlockchainEngine = {
+  blockNumber: 1,
+  timestamp: Math.floor(Date.now() / 1000),
+  gasPrice: 20,
+  chainId: 1337,
+  accounts: [
+    { address: '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4', balance: 100, label: 'Account 1', nonce: 0 },
+    { address: '0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2', balance: 100, label: 'Account 2', nonce: 0 },
+    { address: '0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db', balance: 100, label: 'Account 3', nonce: 0 },
+    { address: '0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB', balance: 100, label: 'Account 4', nonce: 0 },
+    { address: '0x617F2E2fd72FD9D5503197092aC168c91465E7f2', balance: 100, label: 'Account 5', nonce: 0 }
+  ],
+  selectedAccount: 0,
+  contracts: {},  // per-tab deployed contracts
+  genTxHash() {
+    return '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+  },
+  genAddress() {
+    return '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+  },
+  mineBlock() {
+    this.blockNumber++;
+    this.timestamp = Math.floor(Date.now() / 1000);
+    document.getElementById('blockNum').textContent = this.blockNumber;
+    updateTimestamp();
+  }
+};
+
+// ===== APP STATE =====
+let currentPage = 'launcher';
+let currentSubTab = 0;
+let compiledTabs = [false, false, false];
+let deployedTabs = [false, false, false];
+let tabCodes = [null, null, null]; // loaded from localStorage or defaults
+let tabCompleted = [false, false, false];
+let logEntries = [];
+let consoleState = 'open'; // closed, open, maximized
+let hintVisible = false;
+
+// ===== INIT =====
+function init() {
+  loadProgress();
+  loadCodes();
+  initAccountSelect();
+  updateAccountInfo();
+  updateTimestamp();
+  initParticles();
+  renderGuide();
+  updateGlobalProgress();
+  switchSubTab(0);
+  handleHash();
+  window.addEventListener('hashchange', handleHash);
+  setInterval(updateTimestamp, 1000);
+}
+
+function handleHash() {
+  const hash = location.hash.replace('#','') || 'launcher';
+  if (hash === 'lab1') navigateTo('lab1', true);
+  else navigateTo('launcher', true);
+}
+
+function navigateTo(page, fromHash) {
+  if (page === currentPage) return;
+  // Mining animation on card
+  if (page === 'lab1' && currentPage === 'launcher') {
+    const card = document.getElementById('labCard1');
+    card.classList.add('mining');
+    setTimeout(() => {
+      card.classList.remove('mining');
+      showPage(page);
+    }, 400);
+  } else {
+    showPage(page);
+  }
+  if (!fromHash) location.hash = page === 'launcher' ? 'launcher' : page;
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+  currentPage = page;
+  if (page === 'lab1') {
+    syncEditor();
+    addLog('info', `Lab 1 - 탭 ${currentSubTab + 1} 진입`);
+  }
+}
+
+// ===== LOCAL STORAGE =====
+function loadCodes() {
+  for (let i = 0; i < 3; i++) {
+    const saved = localStorage.getItem('lab1_code_' + i);
+    tabCodes[i] = saved !== null ? saved : DEFAULT_CODES[i];
+  }
+}
+
+function saveCode(tabIndex, code) {
+  tabCodes[tabIndex] = code;
+  localStorage.setItem('lab1_code_' + tabIndex, code);
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem('lab1_completed');
+  if (saved) {
+    try { tabCompleted = JSON.parse(saved); } catch(e) {}
+  }
+  tabCompleted.forEach((done, i) => {
+    if (done) document.getElementById('check' + i).style.display = 'inline';
+  });
+}
+
+function saveProgress() {
+  localStorage.setItem('lab1_completed', JSON.stringify(tabCompleted));
+  updateProgressUI();
+}
+
+function updateProgressUI() {
+  const done = tabCompleted.filter(Boolean).length;
+  document.getElementById('lab1Progress').textContent = `${done}/3 완료`;
+  document.getElementById('lab1ProgressBar').style.width = `${Math.round(done/3*100)}%`;
+  updateGlobalProgress();
+}
+
+function updateGlobalProgress() {
+  const done = tabCompleted.filter(Boolean).length;
+  const total = done === 3 ? 1 : 0;
+  document.getElementById('globalProgress').textContent = `${total}/3 Labs`;
+}
+
+function resetAllProgress() {
+  if (!confirm('모든 진행률과 저장된 코드를 초기화하시겠습니까?')) return;
+  localStorage.removeItem('lab1_completed');
+  localStorage.removeItem('lab1_code_0');
+  localStorage.removeItem('lab1_code_1');
+  localStorage.removeItem('lab1_code_2');
+  tabCompleted = [false, false, false];
+  tabCodes = [...DEFAULT_CODES];
+  compiledTabs = [false, false, false];
+  deployedTabs = [false, false, false];
+  BlockchainEngine.contracts = {};
+  for (let i = 0; i < 3; i++) document.getElementById('check' + i).style.display = 'none';
+  updateProgressUI();
+  if (currentPage === 'lab1') switchSubTab(currentSubTab);
+  showToast('success', '초기화 완료');
+}
+
+// ===== SUB TAB =====
+function switchSubTab(idx) {
+  currentSubTab = idx;
+  document.querySelectorAll('.sub-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.getElementById('editorFilename').textContent = TAB_NAMES[idx];
+  compiledTabs[idx] = false;
+  document.getElementById('btnDeploy').disabled = true;
+  syncEditor();
+  renderGuide();
+  renderInteraction();
+  addLog('info', `탭 ${idx + 1}: ${TAB_NAMES[idx]} 전환`);
+}
+
+// ===== CODE EDITOR =====
+function syncEditor() {
+  const textarea = document.getElementById('codeTextarea');
+  textarea.value = tabCodes[currentSubTab];
+  updateHighlight();
+  updateLineNumbers();
+}
+
+function updateHighlight() {
+  const code = document.getElementById('codeTextarea').value;
+  document.getElementById('codeHighlight').innerHTML = highlightSolidity(code);
+}
+
+function updateLineNumbers() {
+  const code = document.getElementById('codeTextarea').value;
+  const lines = code.split('\n').length;
+  const nums = Array.from({length: lines}, (_, i) => i + 1).join('\n');
+  document.getElementById('lineNumbers').textContent = nums;
+}
+
+// Textarea events
+document.getElementById('codeTextarea').addEventListener('input', function() {
+  saveCode(currentSubTab, this.value);
+  updateHighlight();
+  updateLineNumbers();
+  compiledTabs[currentSubTab] = false;
+  deployedTabs[currentSubTab] = false;
+  document.getElementById('btnDeploy').disabled = true;
+});
+
+document.getElementById('codeTextarea').addEventListener('scroll', function() {
+  document.getElementById('codeHighlight').style.transform = `translate(-${this.scrollLeft}px, -${this.scrollTop}px)`;
+  document.getElementById('lineNumbers').style.transform = `translateY(-${this.scrollTop}px)`;
+});
+
+document.getElementById('codeTextarea').addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+    this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+    this.selectionStart = this.selectionEnd = start + 2;
+    this.dispatchEvent(new Event('input'));
+  }
+});
+
+document.getElementById('codeTextarea').addEventListener('click', updateCursorPos);
+document.getElementById('codeTextarea').addEventListener('keyup', updateCursorPos);
+
+function updateCursorPos() {
+  const ta = document.getElementById('codeTextarea');
+  const text = ta.value.substring(0, ta.selectionStart);
+  const lines = text.split('\n');
+  document.getElementById('cursorPos').textContent = `줄 ${lines.length}, 열 ${lines[lines.length - 1].length + 1}`;
+}
+
+function resetCode() {
+  if (!confirm('코드를 초기값으로 되돌리시겠습니까?')) return;
+  tabCodes[currentSubTab] = DEFAULT_CODES[currentSubTab];
+  localStorage.removeItem('lab1_code_' + currentSubTab);
+  syncEditor();
+  compiledTabs[currentSubTab] = false;
+  deployedTabs[currentSubTab] = false;
+  document.getElementById('btnDeploy').disabled = true;
+  renderInteraction();
+  showToast('info', '코드가 초기화되었습니다');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(document.getElementById('codeTextarea').value).then(() => {
+    showToast('success', '코드가 복사되었습니다');
+  });
+}
+
+// ===== SYNTAX HIGHLIGHTER =====
+function highlightSolidity(code) {
+  // Tokenizer approach
+  let result = '';
+  let i = 0;
+  const len = code.length;
+
+  while (i < len) {
+    // Single-line comment
+    if (code[i] === '/' && code[i+1] === '/') {
+      let end = code.indexOf('\n', i);
+      if (end === -1) end = len;
+      result += `<span class="sh-comment">${escHtml(code.substring(i, end))}</span>`;
+      i = end;
+      continue;
+    }
+    // Multi-line comment
+    if (code[i] === '/' && code[i+1] === '*') {
+      let end = code.indexOf('*/', i + 2);
+      if (end === -1) end = len; else end += 2;
+      result += `<span class="sh-comment">${escHtml(code.substring(i, end))}</span>`;
+      i = end;
+      continue;
+    }
+    // String
+    if (code[i] === '"' || code[i] === "'") {
+      const q = code[i];
+      let j = i + 1;
+      while (j < len && code[j] !== q) { if (code[j] === '\\') j++; j++; }
+      j = Math.min(j + 1, len);
+      result += `<span class="sh-string">${escHtml(code.substring(i, j))}</span>`;
+      i = j;
+      continue;
+    }
+    // Number
+    if (/\d/.test(code[i]) && (i === 0 || /[\s=(<>,;+\-*/]/.test(code[i-1]))) {
+      let j = i;
+      while (j < len && /[\d.xXa-fA-F]/.test(code[j])) j++;
+      result += `<span class="sh-number">${escHtml(code.substring(i, j))}</span>`;
+      i = j;
+      continue;
+    }
+    // Word
+    if (/[a-zA-Z_$]/.test(code[i])) {
+      let j = i;
+      while (j < len && /[a-zA-Z0-9_$]/.test(code[j])) j++;
+      const word = code.substring(i, j);
+      const cls = getTokenClass(word);
+      if (cls) {
+        result += `<span class="${cls}">${escHtml(word)}</span>`;
+      } else {
+        // Check if followed by ( -> function name
+        let k = j;
+        while (k < len && code[k] === ' ') k++;
+        if (code[k] === '(' && !/^(if|else|for|while|return|require|revert|assert|emit)$/.test(word)) {
+          result += `<span class="sh-function">${escHtml(word)}</span>`;
+        } else {
+          result += escHtml(word);
+        }
+      }
+      i = j;
+      continue;
+    }
+    // Operators
+    if ('=<>!+-*/%&|^~'.includes(code[i])) {
+      result += `<span class="sh-operator">${escHtml(code[i])}</span>`;
+      i++;
+      continue;
+    }
+    // Punctuation
+    if ('{}()[];,.'.includes(code[i])) {
+      result += `<span class="sh-punctuation">${escHtml(code[i])}</span>`;
+      i++;
+      continue;
+    }
+    result += escHtml(code[i]);
+    i++;
+  }
+  return result;
+}
+
+function getTokenClass(word) {
+  const keywords = ['pragma','solidity','contract','function','returns','return','if','else','for','while','do','break','continue','new','delete','import','is','constructor','modifier','event','emit','require','revert','assert','mapping','struct','enum','interface','library','abstract','override','virtual'];
+  const types = ['string','int','uint','uint256','int256','bool','address','bytes','bytes32','bytes4'];
+  const visibility = ['public','private','internal','external'];
+  const modifiers = ['memory','storage','calldata','payable','view','pure','constant','immutable','indexed'];
+
+  if (keywords.includes(word)) return 'sh-keyword';
+  if (types.includes(word)) return 'sh-type';
+  if (visibility.includes(word)) return 'sh-visibility';
+  if (modifiers.includes(word)) return 'sh-modifier';
+  return null;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== SOLIDITY PARSER =====
+function parseContract(code) {
+  const result = { valid: false, errors: [], contractName: '', variables: [], functions: [] };
+
+  // Check pragma
+  if (!/pragma\s+solidity/.test(code)) {
+    result.errors.push('pragma solidity 선언이 없습니다');
+  }
+  // Check contract
+  const contractMatch = code.match(/contract\s+(\w+)/);
+  if (!contractMatch) {
+    result.errors.push('contract 선언이 없습니다');
+    return result;
+  }
+  result.contractName = contractMatch[1];
+
+  // Check braces
+  const open = (code.match(/{/g) || []).length;
+  const close = (code.match(/}/g) || []).length;
+  if (open !== close) {
+    result.errors.push(`중괄호 짝이 맞지 않습니다 (열림: ${open}, 닫힘: ${close})`);
+    return result;
+  }
+
+  // Extract body
+  const bodyStart = code.indexOf('{', code.indexOf('contract'));
+  const body = code.substring(bodyStart);
+
+  // Parse variables: (type) (visibility) (name) = (value);
+  const varRegex = /^\s*(string|int|uint|uint256|int256|bool|address|bytes\d*)\s+(public|private|internal)?\s*(\w+)\s*(?:=\s*(.+?))?\s*;/gm;
+  let vm;
+  while ((vm = varRegex.exec(body)) !== null) {
+    const vis = vm[2] || 'internal';
+    let initVal = vm[4] ? vm[4].trim() : getDefaultValue(vm[1]);
+    // Clean string value
+    if (initVal.startsWith('"') && initVal.endsWith('"')) {
+      initVal = initVal.slice(1, -1);
+    } else if (initVal.startsWith("'") && initVal.endsWith("'")) {
+      initVal = initVal.slice(1, -1);
+    }
+    result.variables.push({
+      type: vm[1],
+      visibility: vis,
+      name: vm[3],
+      value: initVal,
+      raw: vm[4] ? vm[4].trim() : null
+    });
+  }
+
+  // Parse functions
+  const funcRegex = /function\s+(\w+)\s*\(([^)]*)\)\s*(public|private|internal|external)?\s*(view|pure)?\s*(?:returns\s*\(([^)]*)\))?\s*\{([\s\S]*?)\}/g;
+  let fm;
+  while ((fm = funcRegex.exec(body)) !== null) {
+    const params = fm[2].trim() ? fm[2].trim().split(',').map(p => {
+      const parts = p.trim().split(/\s+/);
+      // type [memory|storage] name
+      if (parts.length === 3) return { type: parts[0], modifier: parts[1], name: parts[2] };
+      if (parts.length === 2) return { type: parts[0], name: parts[1] };
+      return { type: parts[0], name: 'arg' };
+    }) : [];
+    result.functions.push({
+      name: fm[1],
+      params,
+      visibility: fm[3] || 'public',
+      mutability: fm[4] || null,
+      returnType: fm[5] ? fm[5].trim() : null,
+      body: fm[6].trim()
+    });
+  }
+
+  if (result.errors.length === 0) result.valid = true;
+  return result;
+}
+
+function getDefaultValue(type) {
+  if (type === 'string') return '';
+  if (type === 'bool') return 'false';
+  if (type === 'address') return '0x0000000000000000000000000000000000000000';
+  return '0';
+}
+
+// ===== COMPILE =====
+function doCompile() {
+  const code = tabCodes[currentSubTab];
+  const parsed = parseContract(code);
+
+  if (!parsed.valid) {
+    parsed.errors.forEach(err => addLog('error', `컴파일 에러: ${err}`));
+    showToast('error', '컴파일 실패');
+    return;
+  }
+
+  compiledTabs[currentSubTab] = true;
+  deployedTabs[currentSubTab] = false;
+  document.getElementById('btnDeploy').disabled = false;
+
+  const varCount = parsed.variables.length;
+  const funcCount = parsed.functions.length;
+  addLog('success', `컴파일 성공: ${parsed.contractName} (변수 ${varCount}개, 함수 ${funcCount}개)`);
+  showToast('success', `${parsed.contractName} 컴파일 완료!`);
+  renderInteraction();
+}
+
+// ===== DEPLOY =====
+function doDeploy() {
+  if (!compiledTabs[currentSubTab]) {
+    showToast('warning', '먼저 컴파일하세요');
+    return;
+  }
+
+  const code = tabCodes[currentSubTab];
+  const parsed = parseContract(code);
+  if (!parsed.valid) return;
+
+  const addr = BlockchainEngine.genAddress();
+  const txHash = BlockchainEngine.genTxHash();
+  const account = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
+
+  // Gas cost for deployment
+  const gasUsed = 21000 + Math.floor(Math.random() * 80000) + 100000;
+  const gasCostETH = (gasUsed * BlockchainEngine.gasPrice * 1e-9);
+  account.balance -= gasCostETH;
+  account.nonce++;
+
+  // Store contract state
+  const storage = {};
+  parsed.variables.forEach(v => {
+    storage[v.name] = { type: v.type, value: v.value, visibility: v.visibility };
+  });
+
+  BlockchainEngine.contracts[currentSubTab] = {
+    address: addr,
+    name: parsed.contractName,
+    parsed,
+    storage,
+    deployer: account.address
+  };
+
+  BlockchainEngine.mineBlock();
+  deployedTabs[currentSubTab] = true;
+  document.getElementById('btnDeploy').disabled = true;
+
+  updateAccountInfo();
+  addLog('tx', `배포 성공: ${parsed.contractName} → ${shortenAddr(addr)}`);
+  addLog('info', `Tx: ${shortenAddr(txHash)} | Gas: ${gasUsed.toLocaleString()} | Block: ${BlockchainEngine.blockNumber}`);
+  showToast('success', `${parsed.contractName} 배포 완료!`);
+  renderInteraction();
+}
+
+// ===== INTERACTION PANEL =====
+function renderInteraction() {
+  const body = document.getElementById('interactBody');
+  const contract = BlockchainEngine.contracts[currentSubTab];
+
+  if (!contract || !deployedTabs[currentSubTab]) {
+    body.innerHTML = `
+      <div class="interact-empty">
+        <div class="icon">📦</div>
+        <p>컨트랙트를 배포하세요</p>
+        <div class="steps">1️⃣ 코드 확인 → 2️⃣ 컴파일 → 3️⃣ 배포</div>
+      </div>`;
+    document.getElementById('contractAddr').textContent = '';
+    return;
+  }
+
+  document.getElementById('contractAddr').textContent = shortenAddr(contract.address);
+
+  let html = '';
+
+  // Public variables → getter buttons
+  const publicVars = contract.parsed.variables.filter(v => v.visibility === 'public');
+  if (publicVars.length > 0) {
+    html += '<div class="func-group"><div class="func-group-title">📗 Public 변수 (자동 getter)</div>';
+    publicVars.forEach(v => {
+      html += `
+        <div class="func-item">
+          <div class="func-row">
+            <button class="func-btn view" onclick="callPublicVar('${v.name}')">${v.name}</button>
+          </div>
+          <div class="func-result" id="result-var-${v.name}" style="display:none"></div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  // View/pure functions
+  const viewFuncs = contract.parsed.functions.filter(f => f.mutability === 'view' || f.mutability === 'pure');
+  if (viewFuncs.length > 0) {
+    html += '<div class="func-group"><div class="func-group-title">📘 View/Pure 함수</div>';
+    viewFuncs.forEach(f => {
+      const hasParams = f.params.length > 0;
+      html += `
+        <div class="func-item">
+          <div class="func-row">
+            <button class="func-btn view" onclick="callViewFunc('${f.name}')">${f.name}</button>
+            ${hasParams ? f.params.map(p => `<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('') : ''}
+          </div>
+          <div class="func-result" id="result-func-${f.name}" style="display:none"></div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  // State-changing functions
+  const writeFuncs = contract.parsed.functions.filter(f => !f.mutability);
+  if (writeFuncs.length > 0) {
+    html += '<div class="func-group"><div class="func-group-title">📙 상태 변경 함수</div>';
+    writeFuncs.forEach(f => {
+      const hasParams = f.params.length > 0;
+      html += `
+        <div class="func-item">
+          <div class="func-row">
+            <button class="func-btn write" onclick="callWriteFunc('${f.name}')">${f.name}</button>
+            ${hasParams ? f.params.map(p => `<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('') : ''}
+          </div>
+          <div class="func-result" id="result-func-${f.name}" style="display:none"></div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  // State variables visualization
+  html += '<div class="state-section"><h4>📊 상태 변수</h4>';
+  Object.entries(contract.storage).forEach(([name, info]) => {
+    html += `
+      <div class="state-var" id="statevar-${name}">
+        <div>
+          <span class="var-name">${name}</span>
+          <span class="var-meta"> (${info.type}, ${info.visibility})</span>
+        </div>
+        <span class="var-value" id="stateval-${name}">${formatValue(info.type, info.value)}</span>
+      </div>`;
+  });
+  html += '</div>';
+
+  body.innerHTML = html;
+}
+
+function formatValue(type, value) {
+  if (type === 'string') return `"${value}"`;
+  return String(value);
+}
+
+// ===== FUNCTION CALLS =====
+function callPublicVar(name) {
+  const contract = BlockchainEngine.contracts[currentSubTab];
+  if (!contract) return;
+  const info = contract.storage[name];
+  if (!info) return;
+
+  const el = document.getElementById('result-var-' + name);
+  el.style.display = 'block';
+  el.className = 'func-result success';
+  el.innerHTML = `<strong>${info.type}:</strong> ${formatValue(info.type, info.value)}<br><span style="font-size:10px;color:var(--text-muted)">view/pure 함수 → 가스비 무료 (로컬에서 실행)</span>`;
+
+  addLog('success', `${name}() → ${formatValue(info.type, info.value)}`);
+  markTabComplete(currentSubTab);
+}
+
+function callViewFunc(fname) {
+  const contract = BlockchainEngine.contracts[currentSubTab];
+  if (!contract) return;
+  const func = contract.parsed.functions.find(f => f.name === fname);
+  if (!func) return;
+
+  const result = executeViewFunction(contract, func);
+  const el = document.getElementById('result-func-' + fname);
+  el.style.display = 'block';
+  el.className = 'func-result success';
+
+  const retType = func.returnType || 'unknown';
+  el.innerHTML = `<strong>${retType}:</strong> ${formatValue(retType.split(/\s+/)[0], result)}<br><span style="font-size:10px;color:var(--text-muted)">view/pure 함수 → 가스비 무료 (로컬에서 실행)</span>`;
+
+  addLog('success', `${fname}() → ${formatValue(retType.split(/\s+/)[0], result)}`);
+  markTabComplete(currentSubTab);
+}
+
+function callWriteFunc(fname) {
+  const contract = BlockchainEngine.contracts[currentSubTab];
+  if (!contract) return;
+  const func = contract.parsed.functions.find(f => f.name === fname);
+  if (!func) return;
+
+  // Gather params
+  const args = {};
+  for (const p of func.params) {
+    const input = document.getElementById(`input-${fname}-${p.name}`);
+    if (!input || !input.value.trim()) {
+      showToast('warning', `${p.name} 값을 입력하세요`);
+      return;
+    }
+    args[p.name] = input.value.trim();
+  }
+
+  const changes = executeWriteFunction(contract, func, args);
+  const account = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
+
+  // Gas
+  const gasUsed = 21000 + Math.floor(Math.random() * 25000);
+  const gasCostETH = (gasUsed * BlockchainEngine.gasPrice * 1e-9);
+  account.balance -= gasCostETH;
+  account.nonce++;
+  const txHash = BlockchainEngine.genTxHash();
+  BlockchainEngine.mineBlock();
+  updateAccountInfo();
+
+  const el = document.getElementById('result-func-' + fname);
+  el.style.display = 'block';
+  el.className = 'func-result tx';
+
+  let changesHtml = changes.map(c => `${c.variable}: ${c.old} → ${c.new}`).join('<br>');
+  el.innerHTML = `
+    ✅ 트랜잭션 성공<br>
+    Gas: ${gasUsed.toLocaleString()}<br>
+    ${changesHtml ? '변경: ' + changesHtml + '<br>' : ''}
+    <span style="font-size:10px;color:var(--text-muted)">Tx: ${shortenAddr(txHash)}</span>`;
+
+  addLog('tx', `${fname}() → Gas: ${gasUsed.toLocaleString()} | Block: ${BlockchainEngine.blockNumber}`);
+
+  // Update state var display
+  changes.forEach(c => {
+    const valEl = document.getElementById('stateval-' + c.variable);
+    const varEl = document.getElementById('statevar-' + c.variable);
+    if (valEl) {
+      const info = contract.storage[c.variable];
+      valEl.textContent = formatValue(info.type, info.value);
+    }
+    if (varEl) {
+      varEl.classList.remove('changed');
+      void varEl.offsetWidth;
+      varEl.classList.add('changed');
+    }
+  });
+
+  markTabComplete(currentSubTab);
+}
+
+function executeViewFunction(contract, func) {
+  const body = func.body;
+  // Pattern: return _varName;
+  const retVarMatch = body.match(/return\s+(\w+)\s*;/);
+  if (retVarMatch) {
+    const varName = retVarMatch[1];
+    // Check storage (including underscored names)
+    for (const [name, info] of Object.entries(contract.storage)) {
+      if (name === varName) return info.value;
+    }
+    // Literal true/false
+    if (varName === 'true') return 'true';
+    if (varName === 'false') return 'false';
+    return varName;
+  }
+  // Pattern: return "string literal";
+  const retStrMatch = body.match(/return\s+"([^"]*)"\s*;/);
+  if (retStrMatch) return retStrMatch[1];
+  // Pattern: return number;
+  const retNumMatch = body.match(/return\s+(\d+)\s*;/);
+  if (retNumMatch) return retNumMatch[1];
+
+  return '(unknown)';
+}
+
+function executeWriteFunction(contract, func, args) {
+  const body = func.body;
+  const changes = [];
+
+  // Pattern: _var = paramName; or var = paramName;
+  const assignMatch = body.match(/(\w+)\s*=\s*(\w+)\s*;/);
+  if (assignMatch) {
+    const targetVar = assignMatch[1];
+    const sourceParam = assignMatch[2];
+
+    for (const [name, info] of Object.entries(contract.storage)) {
+      if (name === targetVar) {
+        const oldVal = info.value;
+        let newVal = args[sourceParam] !== undefined ? args[sourceParam] : sourceParam;
+        // Clean string quotes from input
+        if (info.type === 'string') {
+          newVal = newVal.replace(/^["']|["']$/g, '');
+        } else if (info.type === 'int' || info.type === 'uint' || info.type === 'uint256' || info.type === 'int256') {
+          newVal = parseInt(newVal) || 0;
+        }
+        info.value = newVal;
+        changes.push({ variable: name, old: formatValue(info.type, oldVal), new: formatValue(info.type, newVal) });
+        break;
+      }
+    }
+  }
+
+  return changes;
+}
+
+function markTabComplete(idx) {
+  if (tabCompleted[idx]) return;
+  tabCompleted[idx] = true;
+  document.getElementById('check' + idx).style.display = 'inline';
+  saveProgress();
+  showToast('success', `탭 ${idx + 1} 완료! 🎉`);
+}
+
+// ===== ACCOUNT =====
+function initAccountSelect() {
+  const sel = document.getElementById('accountSelect');
+  sel.innerHTML = BlockchainEngine.accounts.map((a, i) =>
+    `<option value="${i}">${a.label} (${shortenAddr(a.address)})</option>`
+  ).join('');
+}
+
+function switchAccount() {
+  BlockchainEngine.selectedAccount = parseInt(document.getElementById('accountSelect').value);
+  updateAccountInfo();
+}
+
+function updateAccountInfo() {
+  const a = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
+  document.getElementById('accAddr').textContent = shortenAddr(a.address);
+  document.getElementById('accBalance').textContent = a.balance.toFixed(6) + ' ETH';
+  document.getElementById('accSender').textContent = shortenAddr(a.address);
+}
+
+function updateTimestamp() {
+  const ts = BlockchainEngine.timestamp;
+  const d = new Date(ts * 1000);
+  const el = document.getElementById('bcTimestamp');
+  if (el) el.textContent = d.toLocaleTimeString('ko-KR');
+}
+
+function shortenAddr(addr) {
+  if (!addr || addr.length < 12) return addr;
+  return addr.substring(0, 8) + '...' + addr.substring(addr.length - 6);
+}
+
+// ===== GUIDE =====
+function renderGuide() {
+  const el = document.getElementById('guideContent');
+  const guides = [
+    // Tab 0
+    `<ol class="guide-steps">
+      <li>코드를 확인하세요: <code>string public greet</code></li>
+      <li><strong>컴파일</strong> 버튼을 누르세요</li>
+      <li><strong>배포</strong> 버튼을 누르세요</li>
+      <li>우측에서 <strong>greet</strong> 버튼 클릭!</li>
+    </ol>
+    <div class="guide-hint">💡 <code>public</code> 변수는 자동으로 getter 함수가 생성됩니다.</div>`,
+    // Tab 1
+    `<ol class="guide-steps">
+      <li><code>private</code> 변수와 함수를 확인하세요</li>
+      <li>컴파일 → 배포</li>
+      <li><code>greet()</code>를 호출해보세요</li>
+      <li><code>setGreeting</code>으로 값을 변경하세요</li>
+      <li>다시 <code>greet()</code>를 호출하여 변경 확인!</li>
+    </ol>
+    <div class="guide-hint">💡 상태 변경 함수는 gas를 소모합니다. 잔액 변화를 확인해보세요.</div>`,
+    // Tab 2
+    `<ol class="guide-steps">
+      <li><code>int</code> 타입 변수를 확인하세요</li>
+      <li>컴파일 → 배포 → <code>number</code> 확인</li>
+      <li><strong>도전과제</strong>에 도전해보세요!</li>
+    </ol>
+    <div class="challenge-box">
+      <h4>🏆 도전과제</h4>
+      <p><code>int public number</code>를 <code>int private _number</code>로 변경하고<br>
+      getter/setter 함수를 추가해보세요!</p>
+      <table class="challenge-table">
+        <tr><th>특성</th><th>public</th><th>private</th></tr>
+        <tr><td>외부 접근</td><td>가능</td><td>불가</td></tr>
+        <tr><td>자동 getter</td><td>자동 생성</td><td>직접 작성</td></tr>
+        <tr><td>컨트랙트 내부</td><td>접근 가능</td><td>접근 가능</td></tr>
+        <tr><td>상속 컨트랙트</td><td>접근 가능</td><td>접근 불가</td></tr>
+        <tr><td>사용 시나리오</td><td>공개 데이터</td><td>캡슐화/보안</td></tr>
+      </table>
+      <button class="btn-hint" onclick="toggleHint()">💡 힌트 코드 보기</button>
+      <button class="btn-apply-hint" id="btnApplyHint" onclick="applyHint()">✅ 힌트 코드 적용</button>
+      <pre id="hintCode" style="display:none;margin-top:8px;padding:10px;border-radius:6px;background:var(--bg-deep);color:var(--neon-green);font-size:11px;font-family:var(--font-code);white-space:pre-wrap;overflow-x:auto;border:1px solid var(--border)">${escHtml(HINT_CODE)}</pre>
+    </div>`
+  ];
+  el.innerHTML = guides[currentSubTab];
+}
+
+function toggleHint() {
+  const code = document.getElementById('hintCode');
+  const btn = document.getElementById('btnApplyHint');
+  hintVisible = !hintVisible;
+  code.style.display = hintVisible ? 'block' : 'none';
+  btn.style.display = hintVisible ? 'inline-block' : 'none';
+}
+
+function applyHint() {
+  tabCodes[currentSubTab] = HINT_CODE;
+  saveCode(currentSubTab, HINT_CODE);
+  syncEditor();
+  compiledTabs[currentSubTab] = false;
+  deployedTabs[currentSubTab] = false;
+  document.getElementById('btnDeploy').disabled = true;
+  renderInteraction();
+  showToast('info', '힌트 코드가 적용되었습니다. 컴파일 후 배포해보세요!');
+}
+
+// ===== CONSOLE =====
+function addLog(type, message) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('ko-KR', {hour12: false});
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️', tx: '🔶' };
+  const account = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
+
+  const entry = { type, message, time, icon: icons[type] || 'ℹ️', detail: {
+    type, lab: `Lab 1 - 탭 ${currentSubTab + 1}`,
+    from: shortenAddr(account.address),
+    block: BlockchainEngine.blockNumber,
+    timestamp: now.toLocaleString('ko-KR')
+  }};
+  logEntries.push(entry);
+
+  const body = document.getElementById('consoleBody');
+  const div = document.createElement('div');
+  div.className = `log-entry ${type}`;
+  div.innerHTML = `
+    <div class="log-main">
+      <span class="log-time">${time}</span>
+      <span class="log-icon">${entry.icon}</span>
+      <span class="log-msg">${escHtml(message)}</span>
+    </div>
+    <div class="log-detail">
+      타입: ${entry.detail.type}<br>
+      Lab: ${entry.detail.lab}<br>
+      From: ${entry.detail.from}<br>
+      Block: ${entry.detail.block}<br>
+      시간: ${entry.detail.timestamp}
+    </div>`;
+  div.addEventListener('click', () => div.classList.toggle('expanded'));
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+
+  document.getElementById('logCount').textContent = logEntries.length;
+}
+
+function clearConsole() {
+  document.getElementById('consoleBody').innerHTML = '';
+  logEntries = [];
+  document.getElementById('logCount').textContent = '0';
+}
+
+function toggleConsole() {
+  const body = document.getElementById('consoleBody');
+  const btn = document.getElementById('consoleToggleBtn');
+  if (consoleState === 'closed') {
+    body.className = 'console-body open';
+    consoleState = 'open';
+    btn.textContent = '▼';
+  } else {
+    body.className = 'console-body';
+    consoleState = 'closed';
+    btn.textContent = '▲';
+  }
+}
+
+function maximizeConsole() {
+  const body = document.getElementById('consoleBody');
+  if (consoleState === 'maximized') {
+    body.className = 'console-body open';
+    consoleState = 'open';
+  } else {
+    body.className = 'console-body maximized';
+    consoleState = 'maximized';
+  }
+}
+
+// ===== TOAST =====
+function showToast(type, message) {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${icons[type] || ''}</span><span>${escHtml(message)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', e => {
+  // Don't capture when typing in inputs
+  const tag = e.target.tagName;
+  const isTyping = tag === 'TEXTAREA' || tag === 'INPUT';
+
+  if (e.key === 'Escape') {
+    // Close modal first
+    const modal = document.getElementById('shortcutModal');
+    if (modal.classList.contains('active')) {
+      modal.classList.remove('active');
+      return;
+    }
+    navigateTo('launcher');
+    return;
+  }
+
+  if (e.ctrlKey && e.key === '/') {
+    e.preventDefault();
+    document.getElementById('shortcutModal').classList.toggle('active');
+    return;
+  }
+
+  if (e.ctrlKey && e.key === '`') {
+    e.preventDefault();
+    toggleConsole();
+    return;
+  }
+
+  if (e.ctrlKey && e.key === 'Enter' && currentPage === 'lab1') {
+    e.preventDefault();
+    doCompile();
+    return;
+  }
+
+  if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd') && currentPage === 'lab1') {
+    e.preventDefault();
+    doDeploy();
+    return;
+  }
+
+  if (!isTyping && e.key === '1') {
+    navigateTo('lab1');
+    return;
+  }
+});
+
+// ===== CANVAS PARTICLES =====
+function initParticles() {
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let animId;
+  let isVisible = true;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Create particles
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 2 + 0.5,
+      alpha: Math.random() * 0.4 + 0.1,
+      color: ['#00d4ff', '#7c3aed', '#10b981'][Math.floor(Math.random() * 3)]
+    });
+  }
+
+  function animate() {
+    if (!isVisible) { animId = requestAnimationFrame(animate); return; }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    animId = requestAnimationFrame(animate);
+  }
+  animate();
+
+  document.addEventListener('visibilitychange', () => {
+    isVisible = !document.hidden;
+  });
+}
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>

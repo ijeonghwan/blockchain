@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blockchain Lab Portal</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:'Segoe UI','Malgun Gothic',sans-serif;background:#0a0e1a;color:#e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative}
+
+/* Animated gradient bg */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(0,212,255,.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(124,58,237,.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(16,185,129,.04) 0%,transparent 50%);z-index:0}
+
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.container{position:relative;z-index:1;text-align:center;padding:40px 20px;max-width:900px;width:100%}
+
+/* Title */
+.title{font-size:48px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,#00d4ff,#7c3aed,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
+.subtitle{color:#64748b;font-size:16px;margin-bottom:12px}
+.divider{width:80px;height:3px;background:linear-gradient(90deg,#00d4ff,#7c3aed);border-radius:2px;margin:0 auto 48px}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;padding:0 8px}
+
+/* Card */
+.card{background:rgba(17,22,51,.85);border:1px solid #1e2348;border-radius:16px;padding:32px 24px;text-align:left;text-decoration:none;color:inherit;transition:all .35s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;cursor:pointer;display:block}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;opacity:0;transition:opacity .3s}
+.card:hover{transform:translateY(-8px);border-color:rgba(255,255,255,.12);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.card:hover::before{opacity:1}
+.card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.02),transparent);pointer-events:none}
+
+/* Card colors */
+.card[data-color="cyan"]::before{background:linear-gradient(90deg,#00d4ff,#0ea5e9)}
+.card[data-color="cyan"]:hover{box-shadow:0 12px 40px rgba(0,212,255,.12)}
+.card[data-color="purple"]::before{background:linear-gradient(90deg,#7c3aed,#a855f7)}
+.card[data-color="purple"]:hover{box-shadow:0 12px 40px rgba(124,58,237,.12)}
+.card[data-color="green"]::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.card[data-color="green"]:hover{box-shadow:0 12px 40px rgba(16,185,129,.12)}
+.card[data-color="orange"]::before{background:linear-gradient(90deg,#f59e0b,#fb923c)}
+.card[data-color="orange"]:hover{box-shadow:0 12px 40px rgba(245,158,11,.12)}
+
+.card-icon{font-size:36px;margin-bottom:14px;display:inline-block;transition:transform .3s}
+.card:hover .card-icon{transform:scale(1.15)}
+.card-week{font-size:11px;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;font-weight:600}
+.card[data-color="cyan"] .card-week{color:#00d4ff}
+.card[data-color="purple"] .card-week{color:#a855f7}
+.card[data-color="green"] .card-week{color:#10b981}
+.card[data-color="orange"] .card-week{color:#f59e0b}
+.card h3{font-size:20px;font-weight:700;margin-bottom:8px}
+.card p{font-size:13px;color:#94a3b8;line-height:1.6}
+.card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.card-tags span{padding:3px 10px;border-radius:20px;font-size:10px;background:rgba(255,255,255,.04);color:#64748b;border:1px solid rgba(255,255,255,.06)}
+.card-arrow{position:absolute;bottom:24px;right:24px;font-size:18px;color:#334155;transition:all .3s}
+.card:hover .card-arrow{color:#e2e8f0;transform:translateX(4px)}
+
+/* Footer */
+.footer{margin-top:56px;font-size:12px;color:#334155;position:relative;z-index:1}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.card:nth-child(1){animation:fadeUp .5s .1s both}
+.card:nth-child(2){animation:fadeUp .5s .2s both}
+.card:nth-child(3){animation:fadeUp .5s .3s both}
+.card:nth-child(4){animation:fadeUp .5s .4s both}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="container">
+  <h1 class="title">Blockchain Lab</h1>
+  <p class="subtitle">블록체인 실습 과제 포털</p>
+  <div class="divider"></div>
+
+  <div class="grid">
+    <a class="card" data-color="cyan" href="week3-dashboard/index.html">
+      <div class="card-icon">📊</div>
+      <div class="card-week">Week 3</div>
+      <h3>Dashboard</h3>
+      <p>이더리움 네트워크 대시보드. 실시간 블록, 트랜잭션, 가스 정보를 시각화합니다.</p>
+      <div class="card-tags">
+        <span>Ethereum</span><span>RPC</span><span>Dashboard</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a class="card" data-color="purple" href="ethereum-rpc-practice/index.html">
+      <div class="card-icon">🔗</div>
+      <div class="card-week">RPC Practice</div>
+      <h3>Ethereum RPC</h3>
+      <p>이더리움 JSON-RPC API를 직접 호출하며 블록체인 데이터 조회를 실습합니다.</p>
+      <div class="card-tags">
+        <span>JSON-RPC</span><span>eth_call</span><span>API</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a class="card" data-color="green" href="week5-solidity-lab/index.html">
+      <div class="card-icon">📝</div>
+      <div class="card-week">Week 5</div>
+      <h3>Solidity Lab</h3>
+      <p>Solidity 스마트 컨트랙트 실습 환경. HelloWorld부터 변수, 함수, 가시성을 학습합니다.</p>
+      <div class="card-tags">
+        <span>Solidity</span><span>Smart Contract</span><span>EVM</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+  </div>
+
+  <p class="footer">ijeonghwan &middot; Blockchain Lab Portfolio</p>
+</div>
+
+<script>
+const canvas=document.getElementById('bg'),ctx=canvas.getContext('2d');
+let particles=[];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight}
+resize();window.addEventListener('resize',resize);
+
+for(let i=0;i<50;i++){
+  particles.push({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+    vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,
+    r:Math.random()*1.8+.4,
+    a:Math.random()*.3+.08,
+    c:['#00d4ff','#7c3aed','#10b981','#f59e0b'][Math.floor(Math.random()*4)]
+  });
+}
+
+let visible=true;
+document.addEventListener('visibilitychange',()=>visible=!document.hidden);
+
+(function draw(){
+  requestAnimationFrame(draw);
+  if(!visible)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;
+    if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.c;ctx.globalAlpha=p.a;ctx.fill();
+  });
+  // Draw faint connections
+  ctx.globalAlpha=.03;ctx.strokeStyle='#00d4ff';ctx.lineWidth=.5;
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y;
+      if(dx*dx+dy*dy<18000){
+        ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha=1;
+})();
+</script>
+</body>
+</html>
