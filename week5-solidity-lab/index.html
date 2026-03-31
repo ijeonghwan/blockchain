@@ -104,7 +104,7 @@ input{font-family:var(--font-ui);outline:none}
 .editor-wrap{flex:1;display:flex;overflow:hidden;position:relative}
 .line-numbers{padding:10px 0;text-align:right;font-family:var(--font-code);font-size:13px;line-height:1.6;color:var(--text-muted);user-select:none;min-width:40px;padding-right:8px;background:var(--bg-surface);overflow:hidden;flex-shrink:0}
 .code-area{position:relative;flex:1;overflow:auto}
-.code-highlight{position:absolute;top:0;left:0;right:0;padding:10px 12px;font-family:var(--font-code);font-size:13px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;pointer-events:none;color:transparent}
+.code-highlight{position:absolute;top:0;left:0;right:0;bottom:0;padding:10px 12px;font-family:var(--font-code);font-size:13px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;pointer-events:none;color:var(--text-primary);overflow:hidden}
 .code-textarea{display:block;width:100%;height:100%;padding:10px 12px;font-family:var(--font-code);font-size:13px;line-height:1.6;background:transparent;color:transparent;caret-color:var(--text-primary);border:none;resize:none;white-space:pre-wrap;word-wrap:break-word;position:relative;z-index:1}
 .code-textarea::selection{background:rgba(0,212,255,.2)}
 .editor-footer{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:var(--bg-surface);border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);flex-shrink:0}
@@ -670,8 +670,9 @@ document.getElementById('codeTextarea').addEventListener('input', function() {
 });
 
 document.getElementById('codeTextarea').addEventListener('scroll', function() {
-  document.getElementById('codeHighlight').style.transform = `translate(-${this.scrollLeft}px, -${this.scrollTop}px)`;
-  document.getElementById('lineNumbers').style.transform = `translateY(-${this.scrollTop}px)`;
+  document.getElementById('codeHighlight').scrollTop = this.scrollTop;
+  document.getElementById('codeHighlight').scrollLeft = this.scrollLeft;
+  document.getElementById('lineNumbers').scrollTop = this.scrollTop;
 });
 
 document.getElementById('codeTextarea').addEventListener('keydown', function(e) {
@@ -747,8 +748,8 @@ function highlightSolidity(code) {
       i = j;
       continue;
     }
-    // Number
-    if (/\d/.test(code[i]) && (i === 0 || /[\s=(<>,;+\-*/]/.test(code[i-1]))) {
+    // Number (including version like 0.8.26)
+    if (/\d/.test(code[i]) && (i === 0 || /[\s=(<>,;+\-*/^]/.test(code[i-1]))) {
       let j = i;
       while (j < len && /[\d.xXa-fA-F]/.test(code[j])) j++;
       result += `<span class="sh-number">${escHtml(code.substring(i, j))}</span>`;
