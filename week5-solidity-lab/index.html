@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Solidity Lab - 블록체인 실습 환경</title>
 <style>
-/* ===== RESET & BASE ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg-deep:#0a0e27;--bg-surface:#111633;--bg-elevated:#1a1f4a;--bg-hover:#222860;
@@ -18,36 +17,25 @@
 html,body{height:100%;overflow:hidden}
 body{font-family:var(--font-ui);background:var(--bg-deep);color:var(--text-primary)}
 button{cursor:pointer;font-family:var(--font-ui);border:none;outline:none}
-input{font-family:var(--font-ui);outline:none}
+input,select{font-family:var(--font-ui);outline:none}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg-deep)}
 ::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--neon-cyan)}
-
-/* ===== ANIMATIONS ===== */
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
-@keyframes neonPulse{0%,100%{box-shadow:0 0 5px var(--neon-cyan),0 0 10px rgba(0,212,255,.3)}50%{box-shadow:0 0 15px var(--neon-cyan),0 0 30px rgba(0,212,255,.5)}}
 @keyframes miningPulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.8}100%{transform:scale(1);opacity:1}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes highlightChange{0%{background:rgba(16,185,129,.3)}100%{background:transparent}}
 @keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes chainFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-
-/* ===== CANVAS BG ===== */
 #bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-
-/* ===== LAYOUT ===== */
 .page{display:none;position:relative;z-index:1;height:100vh;animation:fadeIn .3s ease}
 .page.active{display:flex;flex-direction:column}
-
-/* ===== HEADER ===== */
 .header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg-surface);border-bottom:1px solid var(--border);min-height:44px;flex-shrink:0}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-logo{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer}
 .header-nav{display:flex;gap:4px}
 .header-nav button{padding:4px 12px;border-radius:6px;background:transparent;color:var(--text-secondary);font-size:13px;transition:.2s}
 .header-nav button:hover{background:var(--bg-hover);color:var(--text-primary)}
@@ -58,14 +46,12 @@ input{font-family:var(--font-ui);outline:none}
 .shortcut-btn:hover{color:var(--neon-cyan)}
 .reset-btn{padding:4px 10px;border-radius:4px;background:rgba(239,68,68,.15);color:var(--neon-red);font-size:11px;transition:.2s}
 .reset-btn:hover{background:rgba(239,68,68,.25)}
-
-/* ===== LAUNCHER PAGE ===== */
 #launcher{justify-content:center;align-items:center;overflow-y:auto}
 .launcher-container{text-align:center;padding:40px 20px;max-width:1000px;width:100%}
 .launcher-title{font-size:40px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple),var(--neon-green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .launcher-subtitle{color:var(--text-secondary);font-size:16px;margin-bottom:48px}
 .lab-cards{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;position:relative}
-.chain-link{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--border-bright);font-size:28px;animation:chainFloat 3s ease-in-out infinite;display:none}
+.chain-link{color:var(--border-bright);font-size:28px;animation:chainFloat 3s ease-in-out infinite;display:flex;align-items:center}
 .lab-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:280px;text-align:left;transition:all .3s ease;position:relative;overflow:hidden}
 .lab-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));opacity:0;transition:.3s}
 .lab-card:hover{transform:translateY(-8px);border-color:var(--neon-cyan);box-shadow:0 8px 30px rgba(0,212,255,.15)}
@@ -83,18 +69,12 @@ input{font-family:var(--font-ui);outline:none}
 .lab-card-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-green));border-radius:2px;transition:width .5s ease}
 .lab-card.locked{opacity:.4;pointer-events:none}
 .lab-card.locked::after{content:'🔒';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:40px}
-
-/* ===== LAB PAGE ===== */
-#lab1 .lab-body{display:flex;flex:1;overflow:hidden}
-
-/* ===== SUB TABS ===== */
+.lab-body{display:flex;flex:1;overflow:hidden}
 .sub-tabs{display:flex;gap:2px;padding:0 16px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-shrink:0}
-.sub-tab{padding:8px 16px;font-size:13px;color:var(--text-muted);background:transparent;border-bottom:2px solid transparent;transition:.2s;position:relative}
+.sub-tab{padding:8px 16px;font-size:13px;color:var(--text-muted);background:transparent;border-bottom:2px solid transparent;transition:.2s}
 .sub-tab:hover{color:var(--text-secondary)}
 .sub-tab.active{color:var(--neon-cyan);border-bottom-color:var(--neon-cyan)}
 .sub-tab .check{color:var(--neon-green);margin-left:6px;font-size:12px}
-
-/* ===== LEFT: CODE EDITOR ===== */
 .panel-left{width:38%;min-width:320px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--bg-deep)}
 .editor-header{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .editor-filename{font-size:12px;color:var(--text-muted);font-family:var(--font-code)}
@@ -108,20 +88,7 @@ input{font-family:var(--font-ui);outline:none}
 .code-textarea{display:block;width:100%;height:100%;padding:10px 12px;font-family:var(--font-code);font-size:13px;line-height:1.6;background:transparent;color:transparent;caret-color:var(--text-primary);border:none;resize:none;white-space:pre-wrap;word-wrap:break-word;position:relative;z-index:1}
 .code-textarea::selection{background:rgba(0,212,255,.2)}
 .editor-footer{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:var(--bg-surface);border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);flex-shrink:0}
-
-/* Syntax colors */
-.sh-keyword{color:var(--neon-cyan)}
-.sh-type{color:var(--neon-purple)}
-.sh-string{color:var(--neon-green)}
-.sh-number{color:var(--neon-orange)}
-.sh-comment{color:var(--text-muted);font-style:italic}
-.sh-function{color:#60a5fa}
-.sh-modifier{color:#f472b6}
-.sh-punctuation{color:var(--text-secondary)}
-.sh-operator{color:var(--neon-orange)}
-.sh-visibility{color:var(--neon-cyan)}
-
-/* ===== CENTER: CONTROL PANEL ===== */
+.sh-keyword{color:var(--neon-cyan)}.sh-type{color:var(--neon-purple)}.sh-string{color:var(--neon-green)}.sh-number{color:var(--neon-orange)}.sh-comment{color:var(--text-muted);font-style:italic}.sh-function{color:#60a5fa}.sh-modifier{color:#f472b6}.sh-punctuation{color:var(--text-secondary)}.sh-operator{color:var(--neon-orange)}.sh-visibility{color:var(--neon-cyan)}
 .panel-center{width:28%;min-width:240px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--bg-surface);overflow-y:auto}
 .ctrl-section{padding:12px;border-bottom:1px solid var(--border)}
 .ctrl-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px}
@@ -154,8 +121,6 @@ input{font-family:var(--font-ui);outline:none}
 .btn-hint:hover{background:rgba(124,58,237,.25)}
 .btn-apply-hint{padding:6px 12px;border-radius:6px;font-size:12px;background:rgba(16,185,129,.15);color:var(--neon-green);margin-top:4px;transition:.2s;display:none}
 .btn-apply-hint:hover{background:rgba(16,185,129,.25)}
-
-/* ===== RIGHT: INTERACTION PANEL ===== */
 .panel-right{flex:1;min-width:280px;display:flex;flex-direction:column;background:var(--bg-deep);overflow-y:auto}
 .interact-header{padding:10px 12px;background:var(--bg-surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .interact-header h3{font-size:13px;color:var(--text-primary)}
@@ -168,14 +133,17 @@ input{font-family:var(--font-ui);outline:none}
 .func-group{margin-bottom:16px;animation:slideUp .3s ease}
 .func-group-title{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 .func-item{margin-bottom:8px}
-.func-row{display:flex;gap:6px;align-items:center}
+.func-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .func-btn{padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--font-code);transition:.2s;flex-shrink:0}
 .func-btn.view{background:rgba(16,185,129,.15);color:var(--neon-green);border:1px solid rgba(16,185,129,.3)}
 .func-btn.view:hover{background:rgba(16,185,129,.25)}
 .func-btn.write{background:rgba(245,158,11,.15);color:var(--neon-orange);border:1px solid rgba(245,158,11,.3)}
 .func-btn.write:hover{background:rgba(245,158,11,.25)}
-.func-input{flex:1;padding:7px 10px;border-radius:6px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);font-size:12px;font-family:var(--font-code)}
+.func-btn.payable{background:rgba(239,68,68,.15);color:var(--neon-red);border:1px solid rgba(239,68,68,.3)}
+.func-btn.payable:hover{background:rgba(239,68,68,.25)}
+.func-input{flex:1;min-width:80px;padding:7px 10px;border-radius:6px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);font-size:12px;font-family:var(--font-code)}
 .func-input::placeholder{color:var(--text-muted)}
+.func-input.value-input{border-color:rgba(239,68,68,.4);max-width:120px}
 .func-result{margin-top:6px;padding:8px 12px;border-radius:6px;font-size:12px;font-family:var(--font-code);line-height:1.6;animation:slideUp .2s ease}
 .func-result.success{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--neon-green)}
 .func-result.tx{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--neon-orange)}
@@ -187,8 +155,6 @@ input{font-family:var(--font-ui);outline:none}
 .state-var .var-name{color:var(--text-primary);font-family:var(--font-code)}
 .state-var .var-meta{font-size:10px;color:var(--text-muted)}
 .state-var .var-value{color:var(--neon-green);font-family:var(--font-code)}
-
-/* ===== CONSOLE ===== */
 .console-panel{flex-shrink:0;background:var(--bg-surface);border-top:1px solid var(--border);display:flex;flex-direction:column;z-index:10}
 .console-header{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:var(--bg-elevated);cursor:pointer;user-select:none;min-height:28px}
 .console-header h4{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
@@ -212,8 +178,6 @@ input{font-family:var(--font-ui);outline:none}
 .log-entry.info .log-msg{color:var(--neon-cyan)}
 .log-detail{display:none;padding:4px 0 4px 32px;font-size:10px;color:var(--text-muted);line-height:1.6}
 .log-entry.expanded .log-detail{display:block}
-
-/* ===== TOAST ===== */
 .toast-container{position:fixed;top:60px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
 .toast{padding:10px 16px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px;animation:toastIn .3s ease;min-width:220px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 .toast.removing{animation:toastOut .3s ease forwards}
@@ -221,8 +185,6 @@ input{font-family:var(--font-ui);outline:none}
 .toast.error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--neon-red)}
 .toast.info{background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);color:var(--neon-cyan)}
 .toast.warning{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--neon-orange)}
-
-/* ===== MODAL ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center;animation:fadeIn .2s}
 .modal-overlay.active{display:flex}
 .modal{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:480px;width:90%;animation:slideUp .3s ease;max-height:80vh;overflow-y:auto}
@@ -234,25 +196,18 @@ input{font-family:var(--font-ui);outline:none}
 .modal table td:last-child{color:var(--text-secondary)}
 .modal-close{margin-top:16px;padding:8px 20px;border-radius:6px;background:var(--bg-elevated);color:var(--text-secondary);font-size:13px}
 .modal-close:hover{color:var(--text-primary)}
-
-/* ===== SPINNER ===== */
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:4px}
 </style>
 </head>
 <body>
-
 <canvas id="bgCanvas"></canvas>
-
-<!-- ===== TOAST CONTAINER ===== -->
 <div class="toast-container" id="toastContainer"></div>
-
-<!-- ===== SHORTCUT MODAL ===== -->
 <div class="modal-overlay" id="shortcutModal">
   <div class="modal">
     <h3>⌨️ 키보드 단축키</h3>
     <table>
       <tr><th>단축키</th><th>기능</th></tr>
       <tr><td>1</td><td>Lab 1 이동</td></tr>
+      <tr><td>2</td><td>Lab 2 이동</td></tr>
       <tr><td>Escape</td><td>런처로 복귀</td></tr>
       <tr><td>Ctrl+Enter</td><td>컴파일</td></tr>
       <tr><td>Ctrl+Shift+D</td><td>배포</td></tr>
@@ -263,12 +218,10 @@ input{font-family:var(--font-ui);outline:none}
   </div>
 </div>
 
-<!-- ===== LAUNCHER PAGE ===== -->
+<!-- LAUNCHER -->
 <div class="page active" id="launcher">
   <div class="header">
-    <div class="header-left">
-      <span class="header-logo">⛓️ Solidity Lab</span>
-    </div>
+    <div class="header-left"><span class="header-logo">⛓️ Solidity Lab</span></div>
     <div class="header-right">
       <span class="progress-text" id="globalProgress">0/3 Labs</span>
       <button class="shortcut-btn" onclick="document.getElementById('shortcutModal').classList.toggle('active')">Ctrl+/ 단축키</button>
@@ -284,77 +237,57 @@ input{font-family:var(--font-ui);outline:none}
         <div class="lab-card-num">Lab 01</div>
         <h3>HelloWorld & HelloNumber</h3>
         <p>Solidity의 기본 문법을 배웁니다. 상태 변수, 가시성, getter/setter 함수를 실습합니다.</p>
-        <div class="lab-card-meta">
-          <span>⭐ 기초 ★☆☆</span>
-          <span>⏱ ~15분</span>
-        </div>
-        <div class="lab-card-tags">
-          <span>string</span><span>public</span><span>view</span><span>int</span><span>private</span>
-        </div>
+        <div class="lab-card-meta"><span>⭐ 기초 ★☆☆</span><span>⏱ ~15분</span></div>
+        <div class="lab-card-tags"><span>string</span><span>public</span><span>view</span><span>int</span><span>private</span></div>
         <div class="lab-card-progress"><div class="lab-card-progress-fill" id="lab1ProgressBar" style="width:0%"></div></div>
       </div>
-      <div class="chain-link" style="display:block">🔗</div>
-      <div class="lab-card locked">
-        <div class="lab-card-icon">🔄</div>
+      <div class="chain-link">🔗</div>
+      <div class="lab-card" id="labCard2" onclick="navigateTo('lab2')">
+        <div class="lab-card-icon">🚰</div>
         <div class="lab-card-num">Lab 02</div>
-        <h3>Counter & Storage</h3>
-        <p>상태 변경 함수와 이벤트를 학습합니다. 카운터 컨트랙트를 만들어 봅니다.</p>
-        <div class="lab-card-meta">
-          <span>⭐ 초급 ★★☆</span>
-          <span>⏱ ~20분</span>
-        </div>
-        <div class="lab-card-tags">
-          <span>uint</span><span>event</span><span>emit</span><span>require</span>
-        </div>
-        <div class="lab-card-progress"><div class="lab-card-progress-fill" style="width:0%"></div></div>
+        <h3>Faucet</h3>
+        <p>테스트 ETH를 분배하는 Faucet 컨트랙트를 만들고, payable과 require를 학습합니다.</p>
+        <div class="lab-card-meta"><span>⭐ 초급 ★★☆</span><span>⏱ ~20분</span></div>
+        <div class="lab-card-tags"><span>payable</span><span>require</span><span>msg.sender</span><span>transfer</span></div>
+        <div class="lab-card-progress"><div class="lab-card-progress-fill" id="lab2ProgressBar" style="width:0%"></div></div>
       </div>
-      <div class="chain-link" style="display:block">🔗</div>
+      <div class="chain-link">🔗</div>
       <div class="lab-card locked">
         <div class="lab-card-icon">🏦</div>
         <div class="lab-card-num">Lab 03</div>
         <h3>SimpleBank</h3>
-        <p>입출금 기능이 있는 은행 컨트랙트를 구현합니다. mapping과 payable을 학습합니다.</p>
-        <div class="lab-card-meta">
-          <span>⭐ 중급 ★★★</span>
-          <span>⏱ ~30분</span>
-        </div>
-        <div class="lab-card-tags">
-          <span>mapping</span><span>payable</span><span>msg.value</span><span>modifier</span>
-        </div>
+        <p>입출금 기능이 있는 은행 컨트랙트를 구현합니다. mapping과 modifier를 학습합니다.</p>
+        <div class="lab-card-meta"><span>⭐ 중급 ★★★</span><span>⏱ ~30분</span></div>
+        <div class="lab-card-tags"><span>mapping</span><span>modifier</span><span>msg.value</span><span>event</span></div>
         <div class="lab-card-progress"><div class="lab-card-progress-fill" style="width:0%"></div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== LAB 1 PAGE ===== -->
-<div class="page" id="lab1">
+<!-- LAB PAGE (shared by lab1 & lab2) -->
+<div class="page" id="labPage">
   <div class="header">
     <div class="header-left">
-      <span class="header-logo" style="cursor:pointer" onclick="navigateTo('launcher')">⛓️ Solidity Lab</span>
+      <span class="header-logo" onclick="navigateTo('launcher')">⛓️ Solidity Lab</span>
       <div class="header-nav">
-        <button class="active" onclick="navigateTo('launcher')">🏠 런처</button>
-        <button class="active">Lab 1</button>
+        <button onclick="navigateTo('launcher')">🏠 런처</button>
+        <button class="active" id="labNavBtn">Lab 1</button>
       </div>
     </div>
     <div class="header-right">
-      <span class="progress-text" id="lab1Progress">0/3 완료</span>
+      <span class="progress-text" id="labProgress">0/3 완료</span>
       <button class="shortcut-btn" onclick="document.getElementById('shortcutModal').classList.toggle('active')">Ctrl+/</button>
     </div>
   </div>
-  <div class="sub-tabs" id="subTabs">
-    <button class="sub-tab active" data-tab="0" onclick="switchSubTab(0)">1. HelloWorld 기본<span class="check" id="check0" style="display:none">✓</span></button>
-    <button class="sub-tab" data-tab="1" onclick="switchSubTab(1)">2. HelloWorld 확장<span class="check" id="check1" style="display:none">✓</span></button>
-    <button class="sub-tab" data-tab="2" onclick="switchSubTab(2)">3. HelloNumber<span class="check" id="check2" style="display:none">✓</span></button>
-  </div>
+  <div class="sub-tabs" id="subTabs"></div>
   <div class="lab-body">
-    <!-- LEFT: CODE EDITOR -->
     <div class="panel-left">
       <div class="editor-header">
         <span class="editor-filename" id="editorFilename">HelloWorld.sol</span>
         <div class="editor-actions">
-          <button onclick="resetCode()" title="코드 초기화">↺ 초기화</button>
-          <button onclick="copyCode()" title="코드 복사">📋 복사</button>
+          <button onclick="resetCode()">↺ 초기화</button>
+          <button onclick="copyCode()">📋 복사</button>
         </div>
       </div>
       <div class="editor-wrap">
@@ -369,7 +302,6 @@ input{font-family:var(--font-ui);outline:none}
         <span>Solidity ^0.8.26</span>
       </div>
     </div>
-    <!-- CENTER: CONTROL PANEL -->
     <div class="panel-center">
       <div class="ctrl-section">
         <div class="ctrl-section-title">⚡ 컴파일 & 배포</div>
@@ -399,22 +331,16 @@ input{font-family:var(--font-ui);outline:none}
         <div id="guideContent"></div>
       </div>
     </div>
-    <!-- RIGHT: INTERACTION PANEL -->
     <div class="panel-right">
       <div class="interact-header">
         <h3>🔗 컨트랙트 인터랙션</h3>
         <div class="contract-addr" id="contractAddr"></div>
       </div>
       <div class="interact-body" id="interactBody">
-        <div class="interact-empty">
-          <div class="icon">📦</div>
-          <p>컨트랙트를 배포하세요</p>
-          <div class="steps">1️⃣ 코드 확인 → 2️⃣ 컴파일 → 3️⃣ 배포</div>
-        </div>
+        <div class="interact-empty"><div class="icon">📦</div><p>컨트랙트를 배포하세요</p><div class="steps">1️⃣ 코드 확인 → 2️⃣ 컴파일 → 3️⃣ 배포</div></div>
       </div>
     </div>
   </div>
-  <!-- CONSOLE -->
   <div class="console-panel">
     <div class="console-header" onclick="toggleConsole()">
       <h4>🖥 콘솔 <span class="badge" id="logCount">0</span></h4>
@@ -430,11 +356,19 @@ input{font-family:var(--font-ui);outline:none}
 
 <script>
 /* ================================================================
-   SOLIDITY LAB - COMPLETE APPLICATION
+   SOLIDITY LAB - MULTI-LAB APPLICATION
    ================================================================ */
 
-// ===== DEFAULT CODES =====
-const DEFAULT_CODES = [
+// ===== LAB DEFINITIONS =====
+const LABS = {
+  lab1: {
+    name: 'Lab 1', title: 'HelloWorld & HelloNumber',
+    tabs: [
+      { name: '1. HelloWorld 기본', filename: 'HelloWorld.sol' },
+      { name: '2. HelloWorld 확장', filename: 'HelloWorld.sol' },
+      { name: '3. HelloNumber', filename: 'HelloNumber.sol' }
+    ],
+    codes: [
 `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
@@ -461,9 +395,8 @@ pragma solidity ^0.8.26;
 contract HelloNumber {
     int public number = 10;
 }`
-];
-
-const HINT_CODE = `// SPDX-License-Identifier: MIT
+    ],
+    hintCode: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
 contract HelloNumber {
@@ -476,12 +409,208 @@ contract HelloNumber {
     function setNumber(int newNumber) public {
         _number = newNumber;
     }
-}`;
+}`,
+    hintTab: 2,
+    deployFund: 0
+  },
+  lab2: {
+    name: 'Lab 2', title: 'Faucet',
+    tabs: [
+      { name: '1. SimpleFaucet', filename: 'SimpleFaucet.sol' },
+      { name: '2. OwnedFaucet', filename: 'OwnedFaucet.sol' },
+      { name: '3. 도전과제: Cooldown', filename: 'CooldownFaucet.sol' }
+    ],
+    codes: [
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
 
-const TAB_NAMES = ['HelloWorld.sol', 'HelloWorld.sol', 'HelloNumber.sol'];
+contract SimpleFaucet {
+    uint public amountAllowed = 1;
+
+    function requestTokens() public {
+        require(address(this).balance >= amountAllowed, "Faucet empty");
+        payable(msg.sender).transfer(amountAllowed);
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function deposit() public payable {}
+}`,
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract OwnedFaucet {
+    address public owner;
+    uint public amountAllowed = 1;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function requestTokens() public {
+        require(address(this).balance >= amountAllowed, "Faucet empty");
+        payable(msg.sender).transfer(amountAllowed);
+    }
+
+    function setAmountAllowed(uint newAmount) public {
+        require(msg.sender == owner, "Only owner");
+        amountAllowed = newAmount;
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function deposit() public payable {}
+}`,
+`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract CooldownFaucet {
+    address public owner;
+    uint public amountAllowed = 1;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function requestTokens() public {
+        require(address(this).balance >= amountAllowed, "Faucet empty");
+        payable(msg.sender).transfer(amountAllowed);
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function deposit() public payable {}
+}`
+    ],
+    hintCode: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract CooldownFaucet {
+    address public owner;
+    uint public amountAllowed = 1;
+    uint public cooldownTime = 60;
+    mapping(address => uint) public lastAccessTime;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function requestTokens() public {
+        require(address(this).balance >= amountAllowed, "Faucet empty");
+        require(block.timestamp >= lastAccessTime[msg.sender] + cooldownTime, "Cooldown active");
+        payable(msg.sender).transfer(amountAllowed);
+        lastAccessTime[msg.sender] = block.timestamp;
+    }
+
+    function setAmountAllowed(uint newAmount) public {
+        require(msg.sender == owner, "Only owner");
+        amountAllowed = newAmount;
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function deposit() public payable {}
+}`,
+    hintTab: 2,
+    deployFund: 10
+  }
+};
+
+// ===== GUIDES =====
+function getGuide(labId, tabIdx) {
+  if (labId === 'lab1') {
+    const g = [
+      `<ol class="guide-steps">
+        <li>코드를 확인하세요: <code>string public greet</code></li>
+        <li><strong>컴파일</strong> 버튼을 누르세요</li>
+        <li><strong>배포</strong> 버튼을 누르세요</li>
+        <li>우측에서 <strong>greet</strong> 버튼 클릭!</li>
+      </ol>
+      <div class="guide-hint">💡 <code>public</code> 변수는 자동으로 getter 함수가 생성됩니다.</div>`,
+      `<ol class="guide-steps">
+        <li><code>private</code> 변수와 함수를 확인하세요</li>
+        <li>컴파일 → 배포</li>
+        <li><code>greet()</code>를 호출해보세요</li>
+        <li><code>setGreeting</code>으로 값을 변경하세요</li>
+        <li>다시 <code>greet()</code>를 호출하여 변경 확인!</li>
+      </ol>
+      <div class="guide-hint">💡 상태 변경 함수는 gas를 소모합니다. 잔액 변화를 확인해보세요.</div>`,
+      `<ol class="guide-steps">
+        <li><code>int</code> 타입 변수를 확인하세요</li>
+        <li>컴파일 → 배포 → <code>number</code> 확인</li>
+        <li><strong>도전과제</strong>에 도전해보세요!</li>
+      </ol>
+      <div class="challenge-box">
+        <h4>🏆 도전과제</h4>
+        <p><code>int public number</code>를 <code>int private _number</code>로 변경하고 getter/setter 함수를 추가해보세요!</p>
+        <table class="challenge-table">
+          <tr><th>특성</th><th>public</th><th>private</th></tr>
+          <tr><td>외부 접근</td><td>가능</td><td>불가</td></tr>
+          <tr><td>자동 getter</td><td>자동 생성</td><td>직접 작성</td></tr>
+          <tr><td>컨트랙트 내부</td><td>접근 가능</td><td>접근 가능</td></tr>
+          <tr><td>상속 컨트랙트</td><td>접근 가능</td><td>접근 불가</td></tr>
+          <tr><td>사용 시나리오</td><td>공개 데이터</td><td>캡슐화/보안</td></tr>
+        </table>
+        <button class="btn-hint" onclick="toggleHint()">💡 힌트 코드 보기</button>
+        <button class="btn-apply-hint" id="btnApplyHint" onclick="applyHint()">✅ 힌트 코드 적용</button>
+        <pre id="hintCode" style="display:none;margin-top:8px;padding:10px;border-radius:6px;background:var(--bg-deep);color:var(--neon-green);font-size:11px;font-family:var(--font-code);white-space:pre-wrap;overflow-x:auto;border:1px solid var(--border)">${esc(LABS.lab1.hintCode)}</pre>
+      </div>`
+    ];
+    return g[tabIdx] || '';
+  }
+  if (labId === 'lab2') {
+    const g = [
+      `<ol class="guide-steps">
+        <li>코드를 확인하세요: <code>amountAllowed</code>, <code>requestTokens</code></li>
+        <li><strong>컴파일</strong> → <strong>배포</strong></li>
+        <li><code>deposit</code>에 ETH 값을 입력하여 Faucet에 자금을 넣으세요</li>
+        <li><code>getBalance</code>로 Faucet 잔액을 확인하세요</li>
+        <li><code>requestTokens</code>를 호출하여 ETH를 받아보세요!</li>
+      </ol>
+      <div class="guide-hint">💡 <code>payable</code> 함수는 ETH를 받을 수 있습니다. <code>require</code>는 조건이 거짓이면 트랜잭션을 되돌립니다.</div>`,
+      `<ol class="guide-steps">
+        <li><code>owner</code>와 <code>constructor</code>를 확인하세요</li>
+        <li>컴파일 → 배포 (배포자가 owner가 됩니다)</li>
+        <li><code>deposit</code>으로 Faucet에 자금을 넣으세요</li>
+        <li><code>requestTokens</code>로 ETH를 받아보세요</li>
+        <li>계정을 바꿔서 <code>setAmountAllowed</code>를 호출해보세요!</li>
+      </ol>
+      <div class="guide-hint">💡 <code>require(msg.sender == owner)</code>는 owner만 호출 가능하게 합니다. 다른 계정으로 시도하면 revert됩니다.</div>`,
+      `<ol class="guide-steps">
+        <li>현재 코드에는 cooldown이 없습니다</li>
+        <li>먼저 기본 기능이 작동하는지 확인하세요</li>
+        <li><strong>도전과제</strong>: <code>mapping</code>을 사용하여 쿨다운을 추가하세요!</li>
+      </ol>
+      <div class="challenge-box">
+        <h4>🏆 도전과제: Cooldown 추가</h4>
+        <p><code>mapping(address => uint) lastAccessTime</code>을 추가하여<br>같은 사용자가 연속으로 ETH를 요청하지 못하게 하세요!</p>
+        <table class="challenge-table">
+          <tr><th>개념</th><th>설명</th></tr>
+          <tr><td>mapping</td><td>키→값 저장소 (address → uint)</td></tr>
+          <tr><td>block.timestamp</td><td>현재 블록의 시간 (초 단위)</td></tr>
+          <tr><td>cooldown</td><td>마지막 요청 후 대기 시간</td></tr>
+          <tr><td>require</td><td>조건 불충족 시 revert</td></tr>
+        </table>
+        <button class="btn-hint" onclick="toggleHint()">💡 힌트 코드 보기</button>
+        <button class="btn-apply-hint" id="btnApplyHint" onclick="applyHint()">✅ 힌트 코드 적용</button>
+        <pre id="hintCode" style="display:none;margin-top:8px;padding:10px;border-radius:6px;background:var(--bg-deep);color:var(--neon-green);font-size:11px;font-family:var(--font-code);white-space:pre-wrap;overflow-x:auto;border:1px solid var(--border)">${esc(LABS.lab2.hintCode)}</pre>
+      </div>`
+    ];
+    return g[tabIdx] || '';
+  }
+  return '';
+}
 
 // ===== BLOCKCHAIN ENGINE =====
-const BlockchainEngine = {
+const BC = {
   blockNumber: 1,
   timestamp: Math.floor(Date.now() / 1000),
   gasPrice: 20,
@@ -494,469 +623,344 @@ const BlockchainEngine = {
     { address: '0x617F2E2fd72FD9D5503197092aC168c91465E7f2', balance: 100, label: 'Account 5', nonce: 0 }
   ],
   selectedAccount: 0,
-  contracts: {},  // per-tab deployed contracts
-  genTxHash() {
-    return '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-  },
-  genAddress() {
-    return '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
-  },
+  contracts: {}, // key: "lab1_0", "lab2_1", etc.
+  genTxHash() { return '0x' + Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join(''); },
+  genAddress() { return '0x' + Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join(''); },
   mineBlock() {
     this.blockNumber++;
     this.timestamp = Math.floor(Date.now() / 1000);
     document.getElementById('blockNum').textContent = this.blockNumber;
     updateTimestamp();
-  }
+  },
+  curAccount() { return this.accounts[this.selectedAccount]; }
 };
 
 // ===== APP STATE =====
 let currentPage = 'launcher';
-let currentSubTab = 0;
-let compiledTabs = [false, false, false];
-let deployedTabs = [false, false, false];
-let tabCodes = [null, null, null]; // loaded from localStorage or defaults
-let tabCompleted = [false, false, false];
+let currentLab = 'lab1';
+let currentTab = 0;
+
+// Per-lab state
+const labState = {};
+function initLabState(labId) {
+  const n = LABS[labId].tabs.length;
+  labState[labId] = {
+    compiled: Array(n).fill(false),
+    deployed: Array(n).fill(false),
+    codes: LABS[labId].codes.map((c, i) => {
+      const saved = localStorage.getItem(`${labId}_code_${i}`);
+      return saved !== null ? saved : c;
+    }),
+    completed: JSON.parse(localStorage.getItem(`${labId}_completed`) || `[${Array(n).fill('false').join(',')}]`)
+  };
+}
+
 let logEntries = [];
-let consoleState = 'open'; // closed, open, maximized
+let consoleState = 'open';
 let hintVisible = false;
+
+function cKey() { return `${currentLab}_${currentTab}`; }
+function cState() { return labState[currentLab]; }
+function cLab() { return LABS[currentLab]; }
 
 // ===== INIT =====
 function init() {
-  loadProgress();
-  loadCodes();
+  for (const id in LABS) initLabState(id);
   initAccountSelect();
   updateAccountInfo();
   updateTimestamp();
   initParticles();
-  renderGuide();
-  updateGlobalProgress();
-  switchSubTab(0);
+  updateAllProgress();
   handleHash();
   window.addEventListener('hashchange', handleHash);
   setInterval(updateTimestamp, 1000);
+  setupEditor();
 }
 
 function handleHash() {
   const hash = location.hash.replace('#','') || 'launcher';
-  if (hash === 'lab1') navigateTo('lab1', true);
+  if (hash === 'lab1' || hash === 'lab2') navigateTo(hash, true);
   else navigateTo('launcher', true);
 }
 
 function navigateTo(page, fromHash) {
-  if (page === currentPage) return;
-  // Mining animation on card
-  if (page === 'lab1' && currentPage === 'launcher') {
-    const card = document.getElementById('labCard1');
-    card.classList.add('mining');
-    setTimeout(() => {
-      card.classList.remove('mining');
-      showPage(page);
-    }, 400);
+  if (page === currentPage && (page === 'launcher' || page === currentLab)) return;
+  const isLab = page === 'lab1' || page === 'lab2';
+  if (isLab && currentPage === 'launcher') {
+    const card = document.getElementById(page === 'lab1' ? 'labCard1' : 'labCard2');
+    if (card) { card.classList.add('mining'); setTimeout(() => { card.classList.remove('mining'); openLab(page); }, 400); }
+    else openLab(page);
+  } else if (isLab) {
+    openLab(page);
   } else {
-    showPage(page);
+    showPage('launcher');
   }
   if (!fromHash) location.hash = page === 'launcher' ? 'launcher' : page;
 }
 
+function openLab(labId) {
+  currentLab = labId;
+  currentTab = 0;
+  document.getElementById('labNavBtn').textContent = LABS[labId].name;
+  buildSubTabs();
+  switchSubTab(0, true);
+  showPage('labPage');
+}
+
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(page).classList.add('active');
+  const el = page === 'lab1' || page === 'lab2' ? 'labPage' : page;
+  document.getElementById(typeof el === 'string' ? el : page).classList.add('active');
   currentPage = page;
-  if (page === 'lab1') {
-    syncEditor();
-    addLog('info', `Lab 1 - 탭 ${currentSubTab + 1} 진입`);
+  if (page === 'labPage' || page === 'lab1' || page === 'lab2') {
+    addLog('info', `${LABS[currentLab].name} - 탭 ${currentTab + 1} 진입`);
   }
 }
 
-// ===== LOCAL STORAGE =====
-function loadCodes() {
-  for (let i = 0; i < 3; i++) {
-    const saved = localStorage.getItem('lab1_code_' + i);
-    tabCodes[i] = saved !== null ? saved : DEFAULT_CODES[i];
-  }
+// ===== SUB TABS =====
+function buildSubTabs() {
+  const container = document.getElementById('subTabs');
+  const lab = cLab();
+  const state = cState();
+  container.innerHTML = lab.tabs.map((t, i) =>
+    `<button class="sub-tab${i === 0 ? ' active' : ''}" data-tab="${i}" onclick="switchSubTab(${i})">${t.name}<span class="check" id="check_${currentLab}_${i}" style="display:${state.completed[i] ? 'inline' : 'none'}">✓</span></button>`
+  ).join('');
 }
 
-function saveCode(tabIndex, code) {
-  tabCodes[tabIndex] = code;
-  localStorage.setItem('lab1_code_' + tabIndex, code);
-}
-
-function loadProgress() {
-  const saved = localStorage.getItem('lab1_completed');
-  if (saved) {
-    try { tabCompleted = JSON.parse(saved); } catch(e) {}
-  }
-  tabCompleted.forEach((done, i) => {
-    if (done) document.getElementById('check' + i).style.display = 'inline';
-  });
-}
-
-function saveProgress() {
-  localStorage.setItem('lab1_completed', JSON.stringify(tabCompleted));
-  updateProgressUI();
-}
-
-function updateProgressUI() {
-  const done = tabCompleted.filter(Boolean).length;
-  document.getElementById('lab1Progress').textContent = `${done}/3 완료`;
-  document.getElementById('lab1ProgressBar').style.width = `${Math.round(done/3*100)}%`;
-  updateGlobalProgress();
-}
-
-function updateGlobalProgress() {
-  const done = tabCompleted.filter(Boolean).length;
-  const total = done === 3 ? 1 : 0;
-  document.getElementById('globalProgress').textContent = `${total}/3 Labs`;
-}
-
-function resetAllProgress() {
-  if (!confirm('모든 진행률과 저장된 코드를 초기화하시겠습니까?')) return;
-  localStorage.removeItem('lab1_completed');
-  localStorage.removeItem('lab1_code_0');
-  localStorage.removeItem('lab1_code_1');
-  localStorage.removeItem('lab1_code_2');
-  tabCompleted = [false, false, false];
-  tabCodes = [...DEFAULT_CODES];
-  compiledTabs = [false, false, false];
-  deployedTabs = [false, false, false];
-  BlockchainEngine.contracts = {};
-  for (let i = 0; i < 3; i++) document.getElementById('check' + i).style.display = 'none';
-  updateProgressUI();
-  if (currentPage === 'lab1') switchSubTab(currentSubTab);
-  showToast('success', '초기화 완료');
-}
-
-// ===== SUB TAB =====
-function switchSubTab(idx) {
-  currentSubTab = idx;
+function switchSubTab(idx, silent) {
+  currentTab = idx;
+  const state = cState();
   document.querySelectorAll('.sub-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-  document.getElementById('editorFilename').textContent = TAB_NAMES[idx];
-  compiledTabs[idx] = false;
+  document.getElementById('editorFilename').textContent = cLab().tabs[idx].filename;
+  state.compiled[idx] = false;
   document.getElementById('btnDeploy').disabled = true;
+  hintVisible = false;
   syncEditor();
   renderGuide();
   renderInteraction();
-  addLog('info', `탭 ${idx + 1}: ${TAB_NAMES[idx]} 전환`);
+  updateLabProgress();
+  if (!silent) addLog('info', `탭 ${idx + 1}: ${cLab().tabs[idx].filename} 전환`);
 }
 
 // ===== CODE EDITOR =====
+function setupEditor() {
+  const ta = document.getElementById('codeTextarea');
+  ta.addEventListener('input', function() {
+    cState().codes[currentTab] = this.value;
+    localStorage.setItem(`${currentLab}_code_${currentTab}`, this.value);
+    updateHighlight();
+    updateLineNumbers();
+    cState().compiled[currentTab] = false;
+    cState().deployed[currentTab] = false;
+    document.getElementById('btnDeploy').disabled = true;
+  });
+  ta.addEventListener('scroll', function() {
+    document.getElementById('codeHighlight').scrollTop = this.scrollTop;
+    document.getElementById('codeHighlight').scrollLeft = this.scrollLeft;
+    document.getElementById('lineNumbers').scrollTop = this.scrollTop;
+  });
+  ta.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = this.selectionStart, end = this.selectionEnd;
+      this.value = this.value.substring(0, s) + '  ' + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = s + 2;
+      this.dispatchEvent(new Event('input'));
+    }
+  });
+  ta.addEventListener('click', updateCursorPos);
+  ta.addEventListener('keyup', updateCursorPos);
+}
+
 function syncEditor() {
-  const textarea = document.getElementById('codeTextarea');
-  textarea.value = tabCodes[currentSubTab];
+  const ta = document.getElementById('codeTextarea');
+  ta.value = cState().codes[currentTab];
   updateHighlight();
   updateLineNumbers();
 }
 
 function updateHighlight() {
-  const code = document.getElementById('codeTextarea').value;
-  document.getElementById('codeHighlight').innerHTML = highlightSolidity(code);
+  document.getElementById('codeHighlight').innerHTML = highlightSolidity(document.getElementById('codeTextarea').value);
 }
 
 function updateLineNumbers() {
-  const code = document.getElementById('codeTextarea').value;
-  const lines = code.split('\n').length;
-  const nums = Array.from({length: lines}, (_, i) => i + 1).join('\n');
-  document.getElementById('lineNumbers').textContent = nums;
+  const lines = document.getElementById('codeTextarea').value.split('\n').length;
+  document.getElementById('lineNumbers').textContent = Array.from({length:lines},(_,i)=>i+1).join('\n');
 }
-
-// Textarea events
-document.getElementById('codeTextarea').addEventListener('input', function() {
-  saveCode(currentSubTab, this.value);
-  updateHighlight();
-  updateLineNumbers();
-  compiledTabs[currentSubTab] = false;
-  deployedTabs[currentSubTab] = false;
-  document.getElementById('btnDeploy').disabled = true;
-});
-
-document.getElementById('codeTextarea').addEventListener('scroll', function() {
-  document.getElementById('codeHighlight').scrollTop = this.scrollTop;
-  document.getElementById('codeHighlight').scrollLeft = this.scrollLeft;
-  document.getElementById('lineNumbers').scrollTop = this.scrollTop;
-});
-
-document.getElementById('codeTextarea').addEventListener('keydown', function(e) {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    const start = this.selectionStart;
-    const end = this.selectionEnd;
-    this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
-    this.selectionStart = this.selectionEnd = start + 2;
-    this.dispatchEvent(new Event('input'));
-  }
-});
-
-document.getElementById('codeTextarea').addEventListener('click', updateCursorPos);
-document.getElementById('codeTextarea').addEventListener('keyup', updateCursorPos);
 
 function updateCursorPos() {
   const ta = document.getElementById('codeTextarea');
-  const text = ta.value.substring(0, ta.selectionStart);
-  const lines = text.split('\n');
-  document.getElementById('cursorPos').textContent = `줄 ${lines.length}, 열 ${lines[lines.length - 1].length + 1}`;
+  const lines = ta.value.substring(0, ta.selectionStart).split('\n');
+  document.getElementById('cursorPos').textContent = `줄 ${lines.length}, 열 ${lines[lines.length-1].length+1}`;
 }
 
 function resetCode() {
   if (!confirm('코드를 초기값으로 되돌리시겠습니까?')) return;
-  tabCodes[currentSubTab] = DEFAULT_CODES[currentSubTab];
-  localStorage.removeItem('lab1_code_' + currentSubTab);
-  syncEditor();
-  compiledTabs[currentSubTab] = false;
-  deployedTabs[currentSubTab] = false;
+  cState().codes[currentTab] = cLab().codes[currentTab];
+  localStorage.removeItem(`${currentLab}_code_${currentTab}`);
+  cState().compiled[currentTab] = false;
+  cState().deployed[currentTab] = false;
   document.getElementById('btnDeploy').disabled = true;
+  syncEditor();
   renderInteraction();
   showToast('info', '코드가 초기화되었습니다');
 }
 
 function copyCode() {
-  navigator.clipboard.writeText(document.getElementById('codeTextarea').value).then(() => {
-    showToast('success', '코드가 복사되었습니다');
-  });
+  navigator.clipboard.writeText(document.getElementById('codeTextarea').value).then(() => showToast('success', '코드가 복사되었습니다'));
 }
 
 // ===== SYNTAX HIGHLIGHTER =====
 function highlightSolidity(code) {
-  // Tokenizer approach
-  let result = '';
-  let i = 0;
+  let r = '', i = 0;
   const len = code.length;
-
   while (i < len) {
-    // Single-line comment
-    if (code[i] === '/' && code[i+1] === '/') {
-      let end = code.indexOf('\n', i);
-      if (end === -1) end = len;
-      result += `<span class="sh-comment">${escHtml(code.substring(i, end))}</span>`;
-      i = end;
-      continue;
-    }
-    // Multi-line comment
-    if (code[i] === '/' && code[i+1] === '*') {
-      let end = code.indexOf('*/', i + 2);
-      if (end === -1) end = len; else end += 2;
-      result += `<span class="sh-comment">${escHtml(code.substring(i, end))}</span>`;
-      i = end;
-      continue;
-    }
-    // String
-    if (code[i] === '"' || code[i] === "'") {
-      const q = code[i];
-      let j = i + 1;
-      while (j < len && code[j] !== q) { if (code[j] === '\\') j++; j++; }
-      j = Math.min(j + 1, len);
-      result += `<span class="sh-string">${escHtml(code.substring(i, j))}</span>`;
-      i = j;
-      continue;
-    }
-    // Number (including version like 0.8.26)
-    if (/\d/.test(code[i]) && (i === 0 || /[\s=(<>,;+\-*/^]/.test(code[i-1]))) {
-      let j = i;
-      while (j < len && /[\d.xXa-fA-F]/.test(code[j])) j++;
-      result += `<span class="sh-number">${escHtml(code.substring(i, j))}</span>`;
-      i = j;
-      continue;
-    }
-    // Word
-    if (/[a-zA-Z_$]/.test(code[i])) {
-      let j = i;
-      while (j < len && /[a-zA-Z0-9_$]/.test(code[j])) j++;
-      const word = code.substring(i, j);
-      const cls = getTokenClass(word);
-      if (cls) {
-        result += `<span class="${cls}">${escHtml(word)}</span>`;
-      } else {
-        // Check if followed by ( -> function name
-        let k = j;
-        while (k < len && code[k] === ' ') k++;
-        if (code[k] === '(' && !/^(if|else|for|while|return|require|revert|assert|emit)$/.test(word)) {
-          result += `<span class="sh-function">${escHtml(word)}</span>`;
-        } else {
-          result += escHtml(word);
-        }
-      }
-      i = j;
-      continue;
-    }
-    // Operators
-    if ('=<>!+-*/%&|^~'.includes(code[i])) {
-      result += `<span class="sh-operator">${escHtml(code[i])}</span>`;
-      i++;
-      continue;
-    }
-    // Punctuation
-    if ('{}()[];,.'.includes(code[i])) {
-      result += `<span class="sh-punctuation">${escHtml(code[i])}</span>`;
-      i++;
-      continue;
-    }
-    result += escHtml(code[i]);
-    i++;
+    if (code[i]==='/'&&code[i+1]==='/') { let e=code.indexOf('\n',i); if(e===-1)e=len; r+=`<span class="sh-comment">${esc(code.substring(i,e))}</span>`; i=e; continue; }
+    if (code[i]==='/'&&code[i+1]==='*') { let e=code.indexOf('*/',i+2); if(e===-1)e=len; else e+=2; r+=`<span class="sh-comment">${esc(code.substring(i,e))}</span>`; i=e; continue; }
+    if (code[i]==='"'||code[i]==="'") { const q=code[i]; let j=i+1; while(j<len&&code[j]!==q){if(code[j]==='\\')j++;j++;} j=Math.min(j+1,len); r+=`<span class="sh-string">${esc(code.substring(i,j))}</span>`; i=j; continue; }
+    if (/\d/.test(code[i])&&(i===0||/[\s=(<>,;+\-*/^]/.test(code[i-1]))) { let j=i; while(j<len&&/[\d.xXa-fA-F]/.test(code[j]))j++; r+=`<span class="sh-number">${esc(code.substring(i,j))}</span>`; i=j; continue; }
+    if (/[a-zA-Z_$]/.test(code[i])) { let j=i; while(j<len&&/[a-zA-Z0-9_$]/.test(code[j]))j++; const w=code.substring(i,j),c=tokenCls(w); if(c){r+=`<span class="${c}">${esc(w)}</span>`;}else{let k=j;while(k<len&&code[k]===' ')k++;if(code[k]==='('&&!/^(if|else|for|while|return|require|revert|assert|emit)$/.test(w)){r+=`<span class="sh-function">${esc(w)}</span>`;}else{r+=esc(w);}} i=j; continue; }
+    if ('=<>!+-*/%&|^~'.includes(code[i])){r+=`<span class="sh-operator">${esc(code[i])}</span>`;i++;continue;}
+    if ('{}()[];,.'.includes(code[i])){r+=`<span class="sh-punctuation">${esc(code[i])}</span>`;i++;continue;}
+    r+=esc(code[i]);i++;
   }
-  return result;
+  return r;
 }
 
-function getTokenClass(word) {
-  const keywords = ['pragma','solidity','contract','function','returns','return','if','else','for','while','do','break','continue','new','delete','import','is','constructor','modifier','event','emit','require','revert','assert','mapping','struct','enum','interface','library','abstract','override','virtual'];
-  const types = ['string','int','uint','uint256','int256','bool','address','bytes','bytes32','bytes4'];
-  const visibility = ['public','private','internal','external'];
-  const modifiers = ['memory','storage','calldata','payable','view','pure','constant','immutable','indexed'];
-
-  if (keywords.includes(word)) return 'sh-keyword';
-  if (types.includes(word)) return 'sh-type';
-  if (visibility.includes(word)) return 'sh-visibility';
-  if (modifiers.includes(word)) return 'sh-modifier';
+function tokenCls(w) {
+  if (['pragma','solidity','contract','function','returns','return','if','else','for','while','do','break','continue','new','delete','import','is','constructor','modifier','event','emit','require','revert','assert','mapping','struct','enum','interface','library','abstract','override','virtual','receive','fallback'].includes(w)) return 'sh-keyword';
+  if (['string','int','uint','uint256','int256','bool','address','bytes','bytes32','bytes4'].includes(w)) return 'sh-type';
+  if (['public','private','internal','external'].includes(w)) return 'sh-visibility';
+  if (['memory','storage','calldata','payable','view','pure','constant','immutable','indexed'].includes(w)) return 'sh-modifier';
   return null;
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ===== SOLIDITY PARSER =====
+// ===== PARSER =====
 function parseContract(code) {
-  const result = { valid: false, errors: [], contractName: '', variables: [], functions: [] };
-
-  // Check pragma
-  if (!/pragma\s+solidity/.test(code)) {
-    result.errors.push('pragma solidity 선언이 없습니다');
-  }
-  // Check contract
-  const contractMatch = code.match(/contract\s+(\w+)/);
-  if (!contractMatch) {
-    result.errors.push('contract 선언이 없습니다');
-    return result;
-  }
-  result.contractName = contractMatch[1];
-
-  // Check braces
-  const open = (code.match(/{/g) || []).length;
-  const close = (code.match(/}/g) || []).length;
-  if (open !== close) {
-    result.errors.push(`중괄호 짝이 맞지 않습니다 (열림: ${open}, 닫힘: ${close})`);
-    return result;
-  }
-
-  // Extract body
+  const res = { valid:false, errors:[], contractName:'', variables:[], functions:[], hasConstructor:false, constructorBody:'' };
+  if (!/pragma\s+solidity/.test(code)) res.errors.push('pragma solidity 선언이 없습니다');
+  const cm = code.match(/contract\s+(\w+)/);
+  if (!cm) { res.errors.push('contract 선언이 없습니다'); return res; }
+  res.contractName = cm[1];
+  const open=(code.match(/{/g)||[]).length, close=(code.match(/}/g)||[]).length;
+  if (open!==close) { res.errors.push(`중괄호 짝이 맞지 않습니다 (열림:${open}, 닫힘:${close})`); return res; }
   const bodyStart = code.indexOf('{', code.indexOf('contract'));
   const body = code.substring(bodyStart);
 
-  // Parse variables: (type) (visibility) (name) = (value);
-  const varRegex = /^\s*(string|int|uint|uint256|int256|bool|address|bytes\d*)\s+(public|private|internal)?\s*(\w+)\s*(?:=\s*(.+?))?\s*;/gm;
+  // Variables
+  const vr = /^\s*(string|int|uint|uint256|int256|bool|address|bytes\d*)\s+(public|private|internal)?\s*(\w+)\s*(?:=\s*(.+?))?\s*;/gm;
   let vm;
-  while ((vm = varRegex.exec(body)) !== null) {
-    const vis = vm[2] || 'internal';
-    let initVal = vm[4] ? vm[4].trim() : getDefaultValue(vm[1]);
-    // Clean string value
-    if (initVal.startsWith('"') && initVal.endsWith('"')) {
-      initVal = initVal.slice(1, -1);
-    } else if (initVal.startsWith("'") && initVal.endsWith("'")) {
-      initVal = initVal.slice(1, -1);
-    }
-    result.variables.push({
-      type: vm[1],
-      visibility: vis,
-      name: vm[3],
-      value: initVal,
-      raw: vm[4] ? vm[4].trim() : null
-    });
+  while ((vm=vr.exec(body))!==null) {
+    const vis=vm[2]||'internal';
+    let val=vm[4]?vm[4].trim():getDefault(vm[1]);
+    if(val.startsWith('"')&&val.endsWith('"'))val=val.slice(1,-1);
+    else if(val.startsWith("'")&&val.endsWith("'"))val=val.slice(1,-1);
+    res.variables.push({type:vm[1],visibility:vis,name:vm[3],value:val});
   }
 
-  // Parse functions
-  const funcRegex = /function\s+(\w+)\s*\(([^)]*)\)\s*(public|private|internal|external)?\s*(view|pure)?\s*(?:returns\s*\(([^)]*)\))?\s*\{([\s\S]*?)\}/g;
+  // Constructor
+  const ctorMatch = body.match(/constructor\s*\(\s*\)\s*\{([\s\S]*?)\}/);
+  if (ctorMatch) { res.hasConstructor = true; res.constructorBody = ctorMatch[1].trim(); }
+
+  // Functions
+  const fr = /function\s+(\w+)\s*\(([^)]*)\)\s*(public|private|internal|external)?\s*(view|pure|payable)?\s*(?:returns\s*\(([^)]*)\))?\s*\{([\s\S]*?)\}/g;
   let fm;
-  while ((fm = funcRegex.exec(body)) !== null) {
-    const params = fm[2].trim() ? fm[2].trim().split(',').map(p => {
-      const parts = p.trim().split(/\s+/);
-      // type [memory|storage] name
-      if (parts.length === 3) return { type: parts[0], modifier: parts[1], name: parts[2] };
-      if (parts.length === 2) return { type: parts[0], name: parts[1] };
-      return { type: parts[0], name: 'arg' };
+  while ((fm=fr.exec(body))!==null) {
+    const params = fm[2].trim() ? fm[2].trim().split(',').map(p=>{
+      const pts=p.trim().split(/\s+/);
+      if(pts.length===3)return{type:pts[0],modifier:pts[1],name:pts[2]};
+      if(pts.length===2)return{type:pts[0],name:pts[1]};
+      return{type:pts[0],name:'arg'};
     }) : [];
-    result.functions.push({
-      name: fm[1],
-      params,
-      visibility: fm[3] || 'public',
-      mutability: fm[4] || null,
-      returnType: fm[5] ? fm[5].trim() : null,
-      body: fm[6].trim()
+    res.functions.push({
+      name:fm[1], params,
+      visibility:fm[3]||'public',
+      mutability:fm[4]||null,
+      returnType:fm[5]?fm[5].trim():null,
+      body:fm[6].trim()
     });
   }
 
-  if (result.errors.length === 0) result.valid = true;
-  return result;
+  // receive() external payable {}
+  if (/receive\s*\(\s*\)\s*external\s+payable/.test(body)) {
+    // implicit receive support
+  }
+
+  if (res.errors.length===0) res.valid=true;
+  return res;
 }
 
-function getDefaultValue(type) {
-  if (type === 'string') return '';
-  if (type === 'bool') return 'false';
-  if (type === 'address') return '0x0000000000000000000000000000000000000000';
+function getDefault(type) {
+  if(type==='string')return '';
+  if(type==='bool')return 'false';
+  if(type==='address')return '0x0000000000000000000000000000000000000000';
   return '0';
 }
 
 // ===== COMPILE =====
 function doCompile() {
-  const code = tabCodes[currentSubTab];
-  const parsed = parseContract(code);
-
+  const state = cState();
+  const parsed = parseContract(state.codes[currentTab]);
   if (!parsed.valid) {
-    parsed.errors.forEach(err => addLog('error', `컴파일 에러: ${err}`));
+    parsed.errors.forEach(e => addLog('error', `컴파일 에러: ${e}`));
     showToast('error', '컴파일 실패');
     return;
   }
-
-  compiledTabs[currentSubTab] = true;
-  deployedTabs[currentSubTab] = false;
+  state.compiled[currentTab] = true;
+  state.deployed[currentTab] = false;
   document.getElementById('btnDeploy').disabled = false;
-
-  const varCount = parsed.variables.length;
-  const funcCount = parsed.functions.length;
-  addLog('success', `컴파일 성공: ${parsed.contractName} (변수 ${varCount}개, 함수 ${funcCount}개)`);
+  addLog('success', `컴파일 성공: ${parsed.contractName} (변수 ${parsed.variables.length}개, 함수 ${parsed.functions.length}개)`);
   showToast('success', `${parsed.contractName} 컴파일 완료!`);
-  renderInteraction();
 }
 
 // ===== DEPLOY =====
 function doDeploy() {
-  if (!compiledTabs[currentSubTab]) {
-    showToast('warning', '먼저 컴파일하세요');
-    return;
-  }
-
-  const code = tabCodes[currentSubTab];
-  const parsed = parseContract(code);
+  const state = cState();
+  if (!state.compiled[currentTab]) { showToast('warning','먼저 컴파일하세요'); return; }
+  const parsed = parseContract(state.codes[currentTab]);
   if (!parsed.valid) return;
 
-  const addr = BlockchainEngine.genAddress();
-  const txHash = BlockchainEngine.genTxHash();
-  const account = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
-
-  // Gas cost for deployment
-  const gasUsed = 21000 + Math.floor(Math.random() * 80000) + 100000;
-  const gasCostETH = (gasUsed * BlockchainEngine.gasPrice * 1e-9);
-  account.balance -= gasCostETH;
+  const addr = BC.genAddress();
+  const txHash = BC.genTxHash();
+  const account = BC.curAccount();
+  const gasUsed = 121000 + Math.floor(Math.random()*80000);
+  const gasCost = gasUsed * BC.gasPrice * 1e-9;
+  account.balance -= gasCost;
   account.nonce++;
 
-  // Store contract state
+  // Storage
   const storage = {};
   parsed.variables.forEach(v => {
-    storage[v.name] = { type: v.type, value: v.value, visibility: v.visibility };
+    storage[v.name] = { type:v.type, value:v.value, visibility:v.visibility };
   });
 
-  BlockchainEngine.contracts[currentSubTab] = {
-    address: addr,
-    name: parsed.contractName,
-    parsed,
-    storage,
-    deployer: account.address
+  // Constructor: owner = msg.sender
+  if (parsed.hasConstructor) {
+    const ownerAssign = parsed.constructorBody.match(/(\w+)\s*=\s*msg\.sender/);
+    if (ownerAssign && storage[ownerAssign[1]]) {
+      storage[ownerAssign[1]].value = account.address;
+    }
+  }
+
+  // Contract balance (for faucet-type contracts)
+  const deployFund = cLab().deployFund || 0;
+  const contractObj = {
+    address: addr, name: parsed.contractName, parsed, storage,
+    deployer: account.address,
+    balance: deployFund
   };
+  if (deployFund > 0) account.balance -= deployFund;
 
-  BlockchainEngine.mineBlock();
-  deployedTabs[currentSubTab] = true;
+  BC.contracts[cKey()] = contractObj;
+  BC.mineBlock();
+  state.deployed[currentTab] = true;
   document.getElementById('btnDeploy').disabled = true;
-
   updateAccountInfo();
-  addLog('tx', `배포 성공: ${parsed.contractName} → ${shortenAddr(addr)}`);
-  addLog('info', `Tx: ${shortenAddr(txHash)} | Gas: ${gasUsed.toLocaleString()} | Block: ${BlockchainEngine.blockNumber}`);
+
+  addLog('tx', `배포 성공: ${parsed.contractName} → ${shorten(addr)}${deployFund ? ` (초기 잔액: ${deployFund} ETH)` : ''}`);
+  addLog('info', `Tx: ${shorten(txHash)} | Gas: ${gasUsed.toLocaleString()} | Block: ${BC.blockNumber}`);
   showToast('success', `${parsed.contractName} 배포 완료!`);
   renderInteraction();
 }
@@ -964,534 +968,487 @@ function doDeploy() {
 // ===== INTERACTION PANEL =====
 function renderInteraction() {
   const body = document.getElementById('interactBody');
-  const contract = BlockchainEngine.contracts[currentSubTab];
-
-  if (!contract || !deployedTabs[currentSubTab]) {
-    body.innerHTML = `
-      <div class="interact-empty">
-        <div class="icon">📦</div>
-        <p>컨트랙트를 배포하세요</p>
-        <div class="steps">1️⃣ 코드 확인 → 2️⃣ 컴파일 → 3️⃣ 배포</div>
-      </div>`;
+  const contract = BC.contracts[cKey()];
+  if (!contract || !cState().deployed[currentTab]) {
+    body.innerHTML = `<div class="interact-empty"><div class="icon">📦</div><p>컨트랙트를 배포하세요</p><div class="steps">1️⃣ 코드 확인 → 2️⃣ 컴파일 → 3️⃣ 배포</div></div>`;
     document.getElementById('contractAddr').textContent = '';
     return;
   }
-
-  document.getElementById('contractAddr').textContent = shortenAddr(contract.address);
+  document.getElementById('contractAddr').textContent = shorten(contract.address);
 
   let html = '';
 
-  // Public variables → getter buttons
-  const publicVars = contract.parsed.variables.filter(v => v.visibility === 'public');
-  if (publicVars.length > 0) {
+  // Contract balance display for lab2
+  if (contract.balance !== undefined && currentLab === 'lab2') {
+    html += `<div class="state-section" style="margin-bottom:12px;margin-top:0"><h4>💰 컨트랙트 잔액</h4>
+      <div class="state-var" id="statevar-contractBalance"><div><span class="var-name">address(this).balance</span></div>
+      <span class="var-value" id="stateval-contractBalance">${contract.balance} ETH</span></div></div>`;
+  }
+
+  // Public variables
+  const pubVars = contract.parsed.variables.filter(v=>v.visibility==='public');
+  if (pubVars.length) {
     html += '<div class="func-group"><div class="func-group-title">📗 Public 변수 (자동 getter)</div>';
-    publicVars.forEach(v => {
-      html += `
-        <div class="func-item">
-          <div class="func-row">
-            <button class="func-btn view" onclick="callPublicVar('${v.name}')">${v.name}</button>
-          </div>
-          <div class="func-result" id="result-var-${v.name}" style="display:none"></div>
-        </div>`;
+    pubVars.forEach(v => {
+      html += `<div class="func-item"><div class="func-row"><button class="func-btn view" onclick="callPublicVar('${v.name}')">${v.name}</button></div><div class="func-result" id="result-var-${v.name}" style="display:none"></div></div>`;
     });
     html += '</div>';
   }
 
   // View/pure functions
-  const viewFuncs = contract.parsed.functions.filter(f => f.mutability === 'view' || f.mutability === 'pure');
-  if (viewFuncs.length > 0) {
+  const viewFns = contract.parsed.functions.filter(f=>f.mutability==='view'||f.mutability==='pure');
+  if (viewFns.length) {
     html += '<div class="func-group"><div class="func-group-title">📘 View/Pure 함수</div>';
-    viewFuncs.forEach(f => {
-      const hasParams = f.params.length > 0;
-      html += `
-        <div class="func-item">
-          <div class="func-row">
-            <button class="func-btn view" onclick="callViewFunc('${f.name}')">${f.name}</button>
-            ${hasParams ? f.params.map(p => `<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('') : ''}
-          </div>
-          <div class="func-result" id="result-func-${f.name}" style="display:none"></div>
-        </div>`;
+    viewFns.forEach(f => {
+      html += `<div class="func-item"><div class="func-row"><button class="func-btn view" onclick="callViewFunc('${f.name}')">${f.name}</button>${f.params.map(p=>`<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('')}</div><div class="func-result" id="result-func-${f.name}" style="display:none"></div></div>`;
     });
     html += '</div>';
   }
 
-  // State-changing functions
-  const writeFuncs = contract.parsed.functions.filter(f => !f.mutability);
-  if (writeFuncs.length > 0) {
+  // Payable functions
+  const payFns = contract.parsed.functions.filter(f=>f.mutability==='payable');
+  if (payFns.length) {
+    html += '<div class="func-group"><div class="func-group-title">💎 Payable 함수 (ETH 전송 가능)</div>';
+    payFns.forEach(f => {
+      html += `<div class="func-item"><div class="func-row"><button class="func-btn payable" onclick="callPayableFunc('${f.name}')">${f.name}</button>${f.params.map(p=>`<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('')}<input class="func-input value-input" id="value-${f.name}" placeholder="ETH 값"></div><div class="func-result" id="result-func-${f.name}" style="display:none"></div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // State-changing functions (non-payable, non-view)
+  const writeFns = contract.parsed.functions.filter(f=>!f.mutability);
+  if (writeFns.length) {
     html += '<div class="func-group"><div class="func-group-title">📙 상태 변경 함수</div>';
-    writeFuncs.forEach(f => {
-      const hasParams = f.params.length > 0;
-      html += `
-        <div class="func-item">
-          <div class="func-row">
-            <button class="func-btn write" onclick="callWriteFunc('${f.name}')">${f.name}</button>
-            ${hasParams ? f.params.map(p => `<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('') : ''}
-          </div>
-          <div class="func-result" id="result-func-${f.name}" style="display:none"></div>
-        </div>`;
+    writeFns.forEach(f => {
+      html += `<div class="func-item"><div class="func-row"><button class="func-btn write" onclick="callWriteFunc('${f.name}')">${f.name}</button>${f.params.map(p=>`<input class="func-input" id="input-${f.name}-${p.name}" placeholder="${p.type} ${p.name}">`).join('')}</div><div class="func-result" id="result-func-${f.name}" style="display:none"></div></div>`;
     });
     html += '</div>';
   }
 
-  // State variables visualization
+  // State variables
   html += '<div class="state-section"><h4>📊 상태 변수</h4>';
   Object.entries(contract.storage).forEach(([name, info]) => {
-    html += `
-      <div class="state-var" id="statevar-${name}">
-        <div>
-          <span class="var-name">${name}</span>
-          <span class="var-meta"> (${info.type}, ${info.visibility})</span>
-        </div>
-        <span class="var-value" id="stateval-${name}">${formatValue(info.type, info.value)}</span>
-      </div>`;
+    html += `<div class="state-var" id="statevar-${name}"><div><span class="var-name">${name}</span><span class="var-meta"> (${info.type}, ${info.visibility})</span></div><span class="var-value" id="stateval-${name}">${fmtVal(info.type,info.value)}</span></div>`;
   });
   html += '</div>';
-
   body.innerHTML = html;
 }
 
-function formatValue(type, value) {
-  if (type === 'string') return `"${value}"`;
+function fmtVal(type, value) {
+  if(type==='string')return `"${value}"`;
   return String(value);
 }
 
-// ===== FUNCTION CALLS =====
+// ===== FUNCTION EXECUTION =====
 function callPublicVar(name) {
-  const contract = BlockchainEngine.contracts[currentSubTab];
-  if (!contract) return;
-  const info = contract.storage[name];
-  if (!info) return;
-
-  const el = document.getElementById('result-var-' + name);
-  el.style.display = 'block';
-  el.className = 'func-result success';
-  el.innerHTML = `<strong>${info.type}:</strong> ${formatValue(info.type, info.value)}<br><span style="font-size:10px;color:var(--text-muted)">view/pure 함수 → 가스비 무료 (로컬에서 실행)</span>`;
-
-  addLog('success', `${name}() → ${formatValue(info.type, info.value)}`);
-  markTabComplete(currentSubTab);
+  const c = BC.contracts[cKey()]; if(!c)return;
+  const info = c.storage[name]; if(!info)return;
+  const el = document.getElementById('result-var-'+name);
+  el.style.display='block'; el.className='func-result success';
+  el.innerHTML = `<strong>${info.type}:</strong> ${fmtVal(info.type,info.value)}<br><span style="font-size:10px;color:var(--text-muted)">view 함수 → 가스비 무료</span>`;
+  addLog('success', `${name}() → ${fmtVal(info.type,info.value)}`);
+  markComplete();
 }
 
 function callViewFunc(fname) {
-  const contract = BlockchainEngine.contracts[currentSubTab];
-  if (!contract) return;
-  const func = contract.parsed.functions.find(f => f.name === fname);
-  if (!func) return;
+  const c = BC.contracts[cKey()]; if(!c)return;
+  const func = c.parsed.functions.find(f=>f.name===fname); if(!func)return;
+  const result = execView(c, func);
+  const el = document.getElementById('result-func-'+fname);
+  el.style.display='block'; el.className='func-result success';
+  const rt = func.returnType||'unknown';
+  el.innerHTML = `<strong>${rt}:</strong> ${fmtVal(rt.split(/\s+/)[0],result)}<br><span style="font-size:10px;color:var(--text-muted)">view/pure 함수 → 가스비 무료</span>`;
+  addLog('success', `${fname}() → ${fmtVal(rt.split(/\s+/)[0],result)}`);
+  markComplete();
+}
 
-  const result = executeViewFunction(contract, func);
-  const el = document.getElementById('result-func-' + fname);
-  el.style.display = 'block';
-  el.className = 'func-result success';
+function callPayableFunc(fname) {
+  const c = BC.contracts[cKey()]; if(!c)return;
+  const func = c.parsed.functions.find(f=>f.name===fname); if(!func)return;
+  const valueInput = document.getElementById('value-'+fname);
+  const msgValue = parseFloat(valueInput?.value) || 0;
+  const account = BC.curAccount();
 
-  const retType = func.returnType || 'unknown';
-  el.innerHTML = `<strong>${retType}:</strong> ${formatValue(retType.split(/\s+/)[0], result)}<br><span style="font-size:10px;color:var(--text-muted)">view/pure 함수 → 가스비 무료 (로컬에서 실행)</span>`;
+  if (msgValue > 0 && account.balance < msgValue) {
+    showResult(fname, 'error', '❌ 잔액 부족');
+    addLog('error', `${fname}() 실패: 잔액 부족`);
+    return;
+  }
 
-  addLog('success', `${fname}() → ${formatValue(retType.split(/\s+/)[0], result)}`);
-  markTabComplete(currentSubTab);
+  // Add ETH to contract
+  if (msgValue > 0) {
+    account.balance -= msgValue;
+    c.balance = (c.balance||0) + msgValue;
+  }
+
+  // Execute body (may have require, transfer, etc.)
+  try {
+    const args = gatherArgs(fname, func);
+    execWrite(c, func, args);
+  } catch(e) {
+    // Revert: give ETH back
+    if (msgValue > 0) { account.balance += msgValue; c.balance -= msgValue; }
+    showResult(fname, 'error', `❌ revert: ${e.message}`);
+    addLog('error', `${fname}() revert: ${e.message}`);
+    updateAccountInfo();
+    updateContractBalance(c);
+    return;
+  }
+
+  const gasUsed = 21000 + Math.floor(Math.random()*25000);
+  account.balance -= gasUsed * BC.gasPrice * 1e-9;
+  account.nonce++;
+  BC.mineBlock();
+  updateAccountInfo();
+  updateContractBalance(c);
+  updateStateVars(c);
+
+  showResult(fname, 'tx', `✅ 트랜잭션 성공${msgValue?` (${msgValue} ETH 전송)`:''}<br>Gas: ${gasUsed.toLocaleString()}<br><span style="font-size:10px;color:var(--text-muted)">Tx: ${shorten(BC.genTxHash())}</span>`);
+  addLog('tx', `${fname}(){value: ${msgValue} ETH} → Gas: ${gasUsed.toLocaleString()}`);
+  markComplete();
 }
 
 function callWriteFunc(fname) {
-  const contract = BlockchainEngine.contracts[currentSubTab];
-  if (!contract) return;
-  const func = contract.parsed.functions.find(f => f.name === fname);
-  if (!func) return;
+  const c = BC.contracts[cKey()]; if(!c)return;
+  const func = c.parsed.functions.find(f=>f.name===fname); if(!func)return;
+  const account = BC.curAccount();
+  let args;
+  try {
+    args = gatherArgs(fname, func);
+  } catch(e) { return; }
 
-  // Gather params
+  try {
+    execWrite(c, func, args);
+  } catch(e) {
+    showResult(fname, 'error', `❌ revert: ${e.message}`);
+    addLog('error', `${fname}() revert: ${e.message}`);
+    return;
+  }
+
+  const gasUsed = 21000 + Math.floor(Math.random()*25000);
+  account.balance -= gasUsed * BC.gasPrice * 1e-9;
+  account.nonce++;
+  BC.mineBlock();
+  updateAccountInfo();
+  updateContractBalance(c);
+  updateStateVars(c);
+
+  showResult(fname, 'tx', `✅ 트랜잭션 성공<br>Gas: ${gasUsed.toLocaleString()}<br><span style="font-size:10px;color:var(--text-muted)">Tx: ${shorten(BC.genTxHash())}</span>`);
+  addLog('tx', `${fname}() → Gas: ${gasUsed.toLocaleString()}`);
+  markComplete();
+}
+
+function gatherArgs(fname, func) {
   const args = {};
   for (const p of func.params) {
     const input = document.getElementById(`input-${fname}-${p.name}`);
-    if (!input || !input.value.trim()) {
-      showToast('warning', `${p.name} 값을 입력하세요`);
-      return;
-    }
+    if (!input || !input.value.trim()) { showToast('warning', `${p.name} 값을 입력하세요`); throw new Error('missing arg'); }
     args[p.name] = input.value.trim();
   }
-
-  const changes = executeWriteFunction(contract, func, args);
-  const account = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
-
-  // Gas
-  const gasUsed = 21000 + Math.floor(Math.random() * 25000);
-  const gasCostETH = (gasUsed * BlockchainEngine.gasPrice * 1e-9);
-  account.balance -= gasCostETH;
-  account.nonce++;
-  const txHash = BlockchainEngine.genTxHash();
-  BlockchainEngine.mineBlock();
-  updateAccountInfo();
-
-  const el = document.getElementById('result-func-' + fname);
-  el.style.display = 'block';
-  el.className = 'func-result tx';
-
-  let changesHtml = changes.map(c => `${c.variable}: ${c.old} → ${c.new}`).join('<br>');
-  el.innerHTML = `
-    ✅ 트랜잭션 성공<br>
-    Gas: ${gasUsed.toLocaleString()}<br>
-    ${changesHtml ? '변경: ' + changesHtml + '<br>' : ''}
-    <span style="font-size:10px;color:var(--text-muted)">Tx: ${shortenAddr(txHash)}</span>`;
-
-  addLog('tx', `${fname}() → Gas: ${gasUsed.toLocaleString()} | Block: ${BlockchainEngine.blockNumber}`);
-
-  // Update state var display
-  changes.forEach(c => {
-    const valEl = document.getElementById('stateval-' + c.variable);
-    const varEl = document.getElementById('statevar-' + c.variable);
-    if (valEl) {
-      const info = contract.storage[c.variable];
-      valEl.textContent = formatValue(info.type, info.value);
-    }
-    if (varEl) {
-      varEl.classList.remove('changed');
-      void varEl.offsetWidth;
-      varEl.classList.add('changed');
-    }
-  });
-
-  markTabComplete(currentSubTab);
+  return args;
 }
 
-function executeViewFunction(contract, func) {
-  const body = func.body;
-  // Pattern: return _varName;
-  const retVarMatch = body.match(/return\s+(\w+)\s*;/);
-  if (retVarMatch) {
-    const varName = retVarMatch[1];
-    // Check storage (including underscored names)
-    for (const [name, info] of Object.entries(contract.storage)) {
-      if (name === varName) return info.value;
-    }
-    // Literal true/false
-    if (varName === 'true') return 'true';
-    if (varName === 'false') return 'false';
-    return varName;
-  }
-  // Pattern: return "string literal";
-  const retStrMatch = body.match(/return\s+"([^"]*)"\s*;/);
-  if (retStrMatch) return retStrMatch[1];
-  // Pattern: return number;
-  const retNumMatch = body.match(/return\s+(\d+)\s*;/);
-  if (retNumMatch) return retNumMatch[1];
+function showResult(fname, cls, html) {
+  const el = document.getElementById('result-func-'+fname);
+  if (el) { el.style.display='block'; el.className='func-result '+cls; el.innerHTML=html; }
+}
 
+// ===== EXECUTION ENGINE =====
+function execView(contract, func) {
+  const body = func.body;
+  // return address(this).balance
+  if (/return\s+address\s*\(\s*this\s*\)\s*\.balance/.test(body)) return contract.balance || 0;
+  // return _varName
+  const rv = body.match(/return\s+(\w+)\s*;/);
+  if (rv) {
+    for (const [n,info] of Object.entries(contract.storage)) { if(n===rv[1]) return info.value; }
+    if (rv[1]==='true') return 'true';
+    if (rv[1]==='false') return 'false';
+    return rv[1];
+  }
+  // return "str"
+  const rs = body.match(/return\s+"([^"]*)"\s*;/);
+  if (rs) return rs[1];
+  // return number
+  const rn = body.match(/return\s+(\d+)\s*;/);
+  if (rn) return rn[1];
   return '(unknown)';
 }
 
-function executeWriteFunction(contract, func, args) {
+function execWrite(contract, func, args) {
   const body = func.body;
-  const changes = [];
+  const account = BC.curAccount();
+  const lines = body.split(';').map(l=>l.trim()).filter(l=>l);
 
-  // Pattern: _var = paramName; or var = paramName;
-  const assignMatch = body.match(/(\w+)\s*=\s*(\w+)\s*;/);
-  if (assignMatch) {
-    const targetVar = assignMatch[1];
-    const sourceParam = assignMatch[2];
-
-    for (const [name, info] of Object.entries(contract.storage)) {
-      if (name === targetVar) {
-        const oldVal = info.value;
-        let newVal = args[sourceParam] !== undefined ? args[sourceParam] : sourceParam;
-        // Clean string quotes from input
-        if (info.type === 'string') {
-          newVal = newVal.replace(/^["']|["']$/g, '');
-        } else if (info.type === 'int' || info.type === 'uint' || info.type === 'uint256' || info.type === 'int256') {
-          newVal = parseInt(newVal) || 0;
+  for (const line of lines) {
+    // require(...)
+    if (/^require\s*\(/.test(line)) {
+      const inner = line.match(/require\s*\((.+)\)/s);
+      if (inner) {
+        const parts = inner[1];
+        // Split condition and message
+        let cond, errMsg='Requirement not met';
+        // Find the condition part (before the last comma+string)
+        const msgMatch = parts.match(/,\s*"([^"]*)"\s*$/);
+        if (msgMatch) {
+          cond = parts.substring(0, parts.lastIndexOf(',')).trim();
+          errMsg = msgMatch[1];
+        } else {
+          cond = parts.trim();
         }
-        info.value = newVal;
-        changes.push({ variable: name, old: formatValue(info.type, oldVal), new: formatValue(info.type, newVal) });
-        break;
+        if (!evalCond(contract, cond, args, account)) throw new Error(errMsg);
+      }
+      continue;
+    }
+    // payable(msg.sender).transfer(X)
+    if (/payable\s*\(\s*msg\.sender\s*\)\.transfer/.test(line)) {
+      const am = line.match(/\.transfer\s*\((\w+)\)/);
+      if (am) {
+        const val = resolveVal(contract, am[1], args);
+        if (contract.balance < val) throw new Error('Insufficient contract balance');
+        contract.balance -= val;
+        account.balance += val;
+      }
+      continue;
+    }
+    // Assignment: var = expr
+    const assign = line.match(/^(\w+)\s*=\s*(.+)$/);
+    if (assign) {
+      const target = assign[1], expr = assign[2].trim();
+      for (const [name, info] of Object.entries(contract.storage)) {
+        if (name === target) {
+          const oldVal = info.value;
+          let newVal;
+          if (expr === 'msg.sender') {
+            newVal = account.address;
+          } else if (args[expr] !== undefined) {
+            newVal = castVal(info.type, args[expr]);
+          } else {
+            newVal = castVal(info.type, expr);
+          }
+          info.value = newVal;
+          break;
+        }
       }
     }
   }
-
-  return changes;
 }
 
-function markTabComplete(idx) {
-  if (tabCompleted[idx]) return;
-  tabCompleted[idx] = true;
-  document.getElementById('check' + idx).style.display = 'inline';
-  saveProgress();
-  showToast('success', `탭 ${idx + 1} 완료! 🎉`);
+function evalCond(contract, cond, args, account) {
+  // address(this).balance >= X
+  const balCheck = cond.match(/address\s*\(\s*this\s*\)\s*\.balance\s*>=\s*(\w+)/);
+  if (balCheck) {
+    const required = resolveVal(contract, balCheck[1], args);
+    return (contract.balance || 0) >= required;
+  }
+  // msg.sender == owner (or any var)
+  const senderCheck = cond.match(/msg\.sender\s*==\s*(\w+)/);
+  if (senderCheck) {
+    const varName = senderCheck[1];
+    for (const [n, info] of Object.entries(contract.storage)) {
+      if (n === varName) return account.address === info.value;
+    }
+    return false;
+  }
+  // block.timestamp >= lastAccessTime[msg.sender] + cooldownTime
+  const cooldownCheck = cond.match(/block\.timestamp\s*>=\s*(\w+)\s*\[\s*msg\.sender\s*\]\s*\+\s*(\w+)/);
+  if (cooldownCheck) {
+    // Always pass in our sim (no real cooldown tracking)
+    return true;
+  }
+  // X >= Y (generic)
+  const geCheck = cond.match(/(\w+)\s*>=\s*(\w+)/);
+  if (geCheck) {
+    const l = resolveVal(contract, geCheck[1], args);
+    const r = resolveVal(contract, geCheck[2], args);
+    return l >= r;
+  }
+  return true;
 }
 
-// ===== ACCOUNT =====
-function initAccountSelect() {
-  const sel = document.getElementById('accountSelect');
-  sel.innerHTML = BlockchainEngine.accounts.map((a, i) =>
-    `<option value="${i}">${a.label} (${shortenAddr(a.address)})</option>`
-  ).join('');
+function resolveVal(contract, token, args) {
+  if (args && args[token] !== undefined) return parseFloat(args[token]) || 0;
+  for (const [n,info] of Object.entries(contract.storage)) {
+    if (n === token) return parseFloat(info.value) || 0;
+  }
+  const num = parseFloat(token);
+  if (!isNaN(num)) return num;
+  return 0;
 }
 
-function switchAccount() {
-  BlockchainEngine.selectedAccount = parseInt(document.getElementById('accountSelect').value);
+function castVal(type, val) {
+  if (type==='string') return String(val).replace(/^["']|["']$/g,'');
+  if (['int','uint','uint256','int256'].includes(type)) return parseInt(val)||0;
+  if (type==='bool') return val==='true'||val===true?'true':'false';
+  return String(val);
+}
+
+function updateContractBalance(c) {
+  const el = document.getElementById('stateval-contractBalance');
+  const varEl = document.getElementById('statevar-contractBalance');
+  if (el) el.textContent = (c.balance||0) + ' ETH';
+  if (varEl) { varEl.classList.remove('changed'); void varEl.offsetWidth; varEl.classList.add('changed'); }
+}
+
+function updateStateVars(c) {
+  Object.entries(c.storage).forEach(([name, info]) => {
+    const el = document.getElementById('stateval-'+name);
+    const varEl = document.getElementById('statevar-'+name);
+    if (el) el.textContent = fmtVal(info.type, info.value);
+    if (varEl) { varEl.classList.remove('changed'); void varEl.offsetWidth; varEl.classList.add('changed'); }
+  });
+}
+
+// ===== PROGRESS =====
+function markComplete() {
+  const state = cState();
+  if (state.completed[currentTab]) return;
+  state.completed[currentTab] = true;
+  const checkEl = document.getElementById(`check_${currentLab}_${currentTab}`);
+  if (checkEl) checkEl.style.display = 'inline';
+  localStorage.setItem(`${currentLab}_completed`, JSON.stringify(state.completed));
+  updateLabProgress();
+  updateAllProgress();
+  showToast('success', `탭 ${currentTab+1} 완료! 🎉`);
+}
+
+function updateLabProgress() {
+  const done = cState().completed.filter(Boolean).length;
+  const total = cLab().tabs.length;
+  document.getElementById('labProgress').textContent = `${done}/${total} 완료`;
+}
+
+function updateAllProgress() {
+  let labsDone = 0;
+  for (const id in LABS) {
+    const s = labState[id];
+    if (s && s.completed.every(Boolean)) labsDone++;
+    // Update progress bars
+    const bar = document.getElementById(`${id}ProgressBar`);
+    if (bar && s) bar.style.width = `${Math.round(s.completed.filter(Boolean).length/LABS[id].tabs.length*100)}%`;
+  }
+  document.getElementById('globalProgress').textContent = `${labsDone}/3 Labs`;
+}
+
+function resetAllProgress() {
+  if (!confirm('모든 진행률과 저장된 코드를 초기화하시겠습니까?')) return;
+  for (const id in LABS) {
+    const n = LABS[id].tabs.length;
+    for (let i=0;i<n;i++) { localStorage.removeItem(`${id}_code_${i}`); }
+    localStorage.removeItem(`${id}_completed`);
+    initLabState(id);
+  }
+  BC.contracts = {};
+  BC.accounts.forEach(a => { a.balance = 100; a.nonce = 0; });
+  BC.blockNumber = 1;
+  document.getElementById('blockNum').textContent = '1';
   updateAccountInfo();
-}
-
-function updateAccountInfo() {
-  const a = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
-  document.getElementById('accAddr').textContent = shortenAddr(a.address);
-  document.getElementById('accBalance').textContent = a.balance.toFixed(6) + ' ETH';
-  document.getElementById('accSender').textContent = shortenAddr(a.address);
-}
-
-function updateTimestamp() {
-  const ts = BlockchainEngine.timestamp;
-  const d = new Date(ts * 1000);
-  const el = document.getElementById('bcTimestamp');
-  if (el) el.textContent = d.toLocaleTimeString('ko-KR');
-}
-
-function shortenAddr(addr) {
-  if (!addr || addr.length < 12) return addr;
-  return addr.substring(0, 8) + '...' + addr.substring(addr.length - 6);
+  updateAllProgress();
+  if (currentPage !== 'launcher') switchSubTab(0);
+  showToast('success', '초기화 완료');
 }
 
 // ===== GUIDE =====
 function renderGuide() {
-  const el = document.getElementById('guideContent');
-  const guides = [
-    // Tab 0
-    `<ol class="guide-steps">
-      <li>코드를 확인하세요: <code>string public greet</code></li>
-      <li><strong>컴파일</strong> 버튼을 누르세요</li>
-      <li><strong>배포</strong> 버튼을 누르세요</li>
-      <li>우측에서 <strong>greet</strong> 버튼 클릭!</li>
-    </ol>
-    <div class="guide-hint">💡 <code>public</code> 변수는 자동으로 getter 함수가 생성됩니다.</div>`,
-    // Tab 1
-    `<ol class="guide-steps">
-      <li><code>private</code> 변수와 함수를 확인하세요</li>
-      <li>컴파일 → 배포</li>
-      <li><code>greet()</code>를 호출해보세요</li>
-      <li><code>setGreeting</code>으로 값을 변경하세요</li>
-      <li>다시 <code>greet()</code>를 호출하여 변경 확인!</li>
-    </ol>
-    <div class="guide-hint">💡 상태 변경 함수는 gas를 소모합니다. 잔액 변화를 확인해보세요.</div>`,
-    // Tab 2
-    `<ol class="guide-steps">
-      <li><code>int</code> 타입 변수를 확인하세요</li>
-      <li>컴파일 → 배포 → <code>number</code> 확인</li>
-      <li><strong>도전과제</strong>에 도전해보세요!</li>
-    </ol>
-    <div class="challenge-box">
-      <h4>🏆 도전과제</h4>
-      <p><code>int public number</code>를 <code>int private _number</code>로 변경하고<br>
-      getter/setter 함수를 추가해보세요!</p>
-      <table class="challenge-table">
-        <tr><th>특성</th><th>public</th><th>private</th></tr>
-        <tr><td>외부 접근</td><td>가능</td><td>불가</td></tr>
-        <tr><td>자동 getter</td><td>자동 생성</td><td>직접 작성</td></tr>
-        <tr><td>컨트랙트 내부</td><td>접근 가능</td><td>접근 가능</td></tr>
-        <tr><td>상속 컨트랙트</td><td>접근 가능</td><td>접근 불가</td></tr>
-        <tr><td>사용 시나리오</td><td>공개 데이터</td><td>캡슐화/보안</td></tr>
-      </table>
-      <button class="btn-hint" onclick="toggleHint()">💡 힌트 코드 보기</button>
-      <button class="btn-apply-hint" id="btnApplyHint" onclick="applyHint()">✅ 힌트 코드 적용</button>
-      <pre id="hintCode" style="display:none;margin-top:8px;padding:10px;border-radius:6px;background:var(--bg-deep);color:var(--neon-green);font-size:11px;font-family:var(--font-code);white-space:pre-wrap;overflow-x:auto;border:1px solid var(--border)">${escHtml(HINT_CODE)}</pre>
-    </div>`
-  ];
-  el.innerHTML = guides[currentSubTab];
+  document.getElementById('guideContent').innerHTML = getGuide(currentLab, currentTab);
 }
 
 function toggleHint() {
   const code = document.getElementById('hintCode');
   const btn = document.getElementById('btnApplyHint');
   hintVisible = !hintVisible;
-  code.style.display = hintVisible ? 'block' : 'none';
-  btn.style.display = hintVisible ? 'inline-block' : 'none';
+  if(code) code.style.display = hintVisible ? 'block' : 'none';
+  if(btn) btn.style.display = hintVisible ? 'inline-block' : 'none';
 }
 
 function applyHint() {
-  tabCodes[currentSubTab] = HINT_CODE;
-  saveCode(currentSubTab, HINT_CODE);
-  syncEditor();
-  compiledTabs[currentSubTab] = false;
-  deployedTabs[currentSubTab] = false;
+  const lab = cLab();
+  cState().codes[currentTab] = lab.hintCode;
+  localStorage.setItem(`${currentLab}_code_${currentTab}`, lab.hintCode);
+  cState().compiled[currentTab] = false;
+  cState().deployed[currentTab] = false;
   document.getElementById('btnDeploy').disabled = true;
+  syncEditor();
   renderInteraction();
   showToast('info', '힌트 코드가 적용되었습니다. 컴파일 후 배포해보세요!');
 }
 
+// ===== ACCOUNT =====
+function initAccountSelect() {
+  document.getElementById('accountSelect').innerHTML = BC.accounts.map((a,i) =>
+    `<option value="${i}">${a.label} (${shorten(a.address)})</option>`
+  ).join('');
+}
+function switchAccount() { BC.selectedAccount = parseInt(document.getElementById('accountSelect').value); updateAccountInfo(); }
+function updateAccountInfo() {
+  const a = BC.curAccount();
+  document.getElementById('accAddr').textContent = shorten(a.address);
+  document.getElementById('accBalance').textContent = a.balance.toFixed(6) + ' ETH';
+  document.getElementById('accSender').textContent = shorten(a.address);
+}
+function updateTimestamp() {
+  const el = document.getElementById('bcTimestamp');
+  if(el) el.textContent = new Date(BC.timestamp*1000).toLocaleTimeString('ko-KR');
+}
+function shorten(addr) { return (!addr||addr.length<12)?addr:addr.substring(0,8)+'...'+addr.substring(addr.length-6); }
+
 // ===== CONSOLE =====
 function addLog(type, message) {
-  const now = new Date();
-  const time = now.toLocaleTimeString('ko-KR', {hour12: false});
-  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️', tx: '🔶' };
-  const account = BlockchainEngine.accounts[BlockchainEngine.selectedAccount];
-
-  const entry = { type, message, time, icon: icons[type] || 'ℹ️', detail: {
-    type, lab: `Lab 1 - 탭 ${currentSubTab + 1}`,
-    from: shortenAddr(account.address),
-    block: BlockchainEngine.blockNumber,
-    timestamp: now.toLocaleString('ko-KR')
-  }};
-  logEntries.push(entry);
-
+  const time = new Date().toLocaleTimeString('ko-KR',{hour12:false});
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️',tx:'🔶'};
+  logEntries.push({type,message,time});
   const body = document.getElementById('consoleBody');
   const div = document.createElement('div');
   div.className = `log-entry ${type}`;
-  div.innerHTML = `
-    <div class="log-main">
-      <span class="log-time">${time}</span>
-      <span class="log-icon">${entry.icon}</span>
-      <span class="log-msg">${escHtml(message)}</span>
-    </div>
-    <div class="log-detail">
-      타입: ${entry.detail.type}<br>
-      Lab: ${entry.detail.lab}<br>
-      From: ${entry.detail.from}<br>
-      Block: ${entry.detail.block}<br>
-      시간: ${entry.detail.timestamp}
-    </div>`;
-  div.addEventListener('click', () => div.classList.toggle('expanded'));
+  div.innerHTML = `<div class="log-main"><span class="log-time">${time}</span><span class="log-icon">${icons[type]||'ℹ️'}</span><span class="log-msg">${esc(message)}</span></div><div class="log-detail">Lab: ${LABS[currentLab]?.name||''} 탭 ${currentTab+1}<br>From: ${shorten(BC.curAccount().address)}<br>Block: ${BC.blockNumber}</div>`;
+  div.addEventListener('click',()=>div.classList.toggle('expanded'));
   body.appendChild(div);
   body.scrollTop = body.scrollHeight;
-
   document.getElementById('logCount').textContent = logEntries.length;
 }
-
-function clearConsole() {
-  document.getElementById('consoleBody').innerHTML = '';
-  logEntries = [];
-  document.getElementById('logCount').textContent = '0';
-}
-
+function clearConsole() { document.getElementById('consoleBody').innerHTML=''; logEntries=[]; document.getElementById('logCount').textContent='0'; }
 function toggleConsole() {
-  const body = document.getElementById('consoleBody');
-  const btn = document.getElementById('consoleToggleBtn');
-  if (consoleState === 'closed') {
-    body.className = 'console-body open';
-    consoleState = 'open';
-    btn.textContent = '▼';
-  } else {
-    body.className = 'console-body';
-    consoleState = 'closed';
-    btn.textContent = '▲';
-  }
+  const b=document.getElementById('consoleBody'),btn=document.getElementById('consoleToggleBtn');
+  if(consoleState==='closed'){b.className='console-body open';consoleState='open';btn.textContent='▼';}
+  else{b.className='console-body';consoleState='closed';btn.textContent='▲';}
 }
-
 function maximizeConsole() {
-  const body = document.getElementById('consoleBody');
-  if (consoleState === 'maximized') {
-    body.className = 'console-body open';
-    consoleState = 'open';
-  } else {
-    body.className = 'console-body maximized';
-    consoleState = 'maximized';
-  }
+  const b=document.getElementById('consoleBody');
+  if(consoleState==='maximized'){b.className='console-body open';consoleState='open';}
+  else{b.className='console-body maximized';consoleState='maximized';}
 }
 
 // ===== TOAST =====
-function showToast(type, message) {
-  const container = document.getElementById('toastContainer');
-  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${icons[type] || ''}</span><span>${escHtml(message)}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.classList.add('removing');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+function showToast(type, msg) {
+  const icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span>${icons[type]||''}</span><span>${esc(msg)}</span>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>{t.classList.add('removing');setTimeout(()=>t.remove(),300);},3000);
 }
 
-// ===== KEYBOARD SHORTCUTS =====
+// ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
-  // Don't capture when typing in inputs
-  const tag = e.target.tagName;
-  const isTyping = tag === 'TEXTAREA' || tag === 'INPUT';
-
-  if (e.key === 'Escape') {
-    // Close modal first
-    const modal = document.getElementById('shortcutModal');
-    if (modal.classList.contains('active')) {
-      modal.classList.remove('active');
-      return;
-    }
-    navigateTo('launcher');
-    return;
-  }
-
-  if (e.ctrlKey && e.key === '/') {
-    e.preventDefault();
-    document.getElementById('shortcutModal').classList.toggle('active');
-    return;
-  }
-
-  if (e.ctrlKey && e.key === '`') {
-    e.preventDefault();
-    toggleConsole();
-    return;
-  }
-
-  if (e.ctrlKey && e.key === 'Enter' && currentPage === 'lab1') {
-    e.preventDefault();
-    doCompile();
-    return;
-  }
-
-  if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd') && currentPage === 'lab1') {
-    e.preventDefault();
-    doDeploy();
-    return;
-  }
-
-  if (!isTyping && e.key === '1') {
-    navigateTo('lab1');
-    return;
-  }
+  const isTyping = e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT';
+  if(e.key==='Escape'){const m=document.getElementById('shortcutModal');if(m.classList.contains('active')){m.classList.remove('active');return;}navigateTo('launcher');return;}
+  if(e.ctrlKey&&e.key==='/'){e.preventDefault();document.getElementById('shortcutModal').classList.toggle('active');return;}
+  if(e.ctrlKey&&e.key==='`'){e.preventDefault();toggleConsole();return;}
+  if(e.ctrlKey&&e.key==='Enter'&&currentPage!=='launcher'){e.preventDefault();doCompile();return;}
+  if(e.ctrlKey&&e.shiftKey&&(e.key==='D'||e.key==='d')&&currentPage!=='launcher'){e.preventDefault();doDeploy();return;}
+  if(!isTyping&&e.key==='1'){navigateTo('lab1');return;}
+  if(!isTyping&&e.key==='2'){navigateTo('lab2');return;}
 });
 
-// ===== CANVAS PARTICLES =====
+// ===== PARTICLES =====
 function initParticles() {
-  const canvas = document.getElementById('bgCanvas');
-  const ctx = canvas.getContext('2d');
-  let particles = [];
-  let animId;
-  let isVisible = true;
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  // Create particles
-  for (let i = 0; i < 60; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      size: Math.random() * 2 + 0.5,
-      alpha: Math.random() * 0.4 + 0.1,
-      color: ['#00d4ff', '#7c3aed', '#10b981'][Math.floor(Math.random() * 3)]
-    });
-  }
-
-  function animate() {
-    if (!isVisible) { animId = requestAnimationFrame(animate); return; }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width;
-      if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height;
-      if (p.y > canvas.height) p.y = 0;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.alpha;
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    animId = requestAnimationFrame(animate);
-  }
-  animate();
-
-  document.addEventListener('visibilitychange', () => {
-    isVisible = !document.hidden;
-  });
+  const canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d');
+  let particles=[],visible=true;
+  function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<60;i++)particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,size:Math.random()*2+.5,alpha:Math.random()*.4+.1,color:['#00d4ff','#7c3aed','#10b981'][Math.floor(Math.random()*3)]});
+  (function animate(){requestAnimationFrame(animate);if(!visible)return;ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.globalAlpha=p.alpha;ctx.fill();});ctx.globalAlpha=1;})();
+  document.addEventListener('visibilitychange',()=>{visible=!document.hidden;});
 }
 
 // ===== START =====
