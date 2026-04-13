@@ -17,7 +17,7 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--f
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(0,212,255,.06),transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(124,58,237,.06),transparent 60%)}
 canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-.container{position:relative;z-index:1;width:100%;max-width:480px;padding:20px}
+.container{position:relative;z-index:1;width:100%;max-width:520px;padding:20px}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--green))}
@@ -63,6 +63,18 @@ canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
 .network-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;background:rgba(124,58,237,.12);color:var(--purple);border:1px solid rgba(124,58,237,.25);margin-top:4px}
 .network-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--purple)}
+
+.tx-link{display:block;margin-top:12px;padding:12px 16px;background:var(--elevated);border:1px solid rgba(16,185,129,.25);border-radius:10px;text-align:center;animation:fadeIn .3s}
+.tx-link a{color:var(--green);font-family:var(--font-code);font-size:12px;text-decoration:none;word-break:break-all}
+.tx-link a:hover{text-decoration:underline;color:var(--cyan)}
+.tx-link .tx-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;margin-top:16px;position:relative;overflow:hidden}
+.chart-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--purple))}
+.chart-card h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-container{position:relative;width:100%;height:180px}
+.chart-container canvas{width:100%;height:100%}
+.chart-empty{color:var(--muted);font-size:13px;text-align:center;padding:40px 0}
 
 .footer{text-align:center;margin-top:20px;font-size:11px;color:var(--muted)}
 
@@ -124,8 +136,22 @@ canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
       <button class="btn btn-disconnect" onclick="disconnectWallet()">연결 해제</button>
     </div>
 
+    <div id="txResult" class="tx-link" style="display:none">
+      <div class="tx-label">Transaction Hash</div>
+      <a id="txLink" href="#" target="_blank" rel="noopener"></a>
+    </div>
+
     <div class="status" id="status"></div>
   </div>
+
+  <div class="chart-card" id="chartCard">
+    <h3>📊 Faucet Balance History</h3>
+    <div class="chart-container">
+      <canvas id="balanceChart"></canvas>
+      <div class="chart-empty" id="chartEmpty">지갑 연결 후 잔액 기록이 표시됩니다</div>
+    </div>
+  </div>
+
   <p class="footer">Powered by Solidity Lab</p>
 </div>
 
@@ -238,6 +264,7 @@ async function updateBalances() {
       });
       const faucetETH = parseInt(faucetHex, 16) / 1e18;
       document.getElementById('faucetBalance').textContent = faucetETH.toFixed(4) + ' ETH';
+      addBalanceRecord(faucetETH);
     } else {
       document.getElementById('faucetBalance').textContent = '(컨트랙트 미배포)';
     }
@@ -272,7 +299,8 @@ async function requestTokens() {
       }]
     });
 
-    showStatus('success', `✅ 요청 성공! Tx: ${txHash.substring(0, 18)}...`);
+    showStatus('success', '✅ 요청 성공! 트랜잭션이 전송되었습니다');
+    showTxLink(txHash);
     setTimeout(updateBalances, 3000);
   } catch (err) {
     if (err.code === 4001) {
@@ -284,6 +312,126 @@ async function requestTokens() {
     btn.disabled = false;
     btn.innerHTML = '<span class="btn-icon">🚰</span> 0.01 ETH 요청하기';
   }
+}
+
+// ===== TX LINK =====
+function showTxLink(txHash) {
+  const el = document.getElementById('txResult');
+  const link = document.getElementById('txLink');
+  const explorerUrl = `https://sepolia.etherscan.io/tx/${txHash}`;
+  link.href = explorerUrl;
+  link.textContent = txHash;
+  el.style.display = 'block';
+}
+
+// ===== BALANCE CHART =====
+let balanceHistory = JSON.parse(localStorage.getItem('faucetBalanceHistory') || '[]');
+
+function addBalanceRecord(ethValue) {
+  const now = new Date();
+  const label = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  balanceHistory.push({ time: label, value: ethValue, ts: now.getTime() });
+  // Keep last 20 records
+  if (balanceHistory.length > 20) balanceHistory = balanceHistory.slice(-20);
+  localStorage.setItem('faucetBalanceHistory', JSON.stringify(balanceHistory));
+  drawChart();
+}
+
+function drawChart() {
+  const canvas = document.getElementById('balanceChart');
+  const empty = document.getElementById('chartEmpty');
+  if (balanceHistory.length < 2) {
+    empty.style.display = 'block';
+    canvas.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  canvas.style.display = 'block';
+
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  const pad = { top: 20, right: 16, bottom: 32, left: 52 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  const values = balanceHistory.map(d => d.value);
+  const maxV = Math.max(...values) * 1.15 || 0.01;
+  const minV = Math.min(0, Math.min(...values));
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(42,47,90,0.6)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (ch / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    const val = (maxV - (maxV - minV) * (i / 4)).toFixed(4);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px Consolas, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(val, pad.left - 6, y + 3);
+  }
+
+  // X labels
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(balanceHistory.length / 5));
+  balanceHistory.forEach((d, i) => {
+    if (i % step === 0 || i === balanceHistory.length - 1) {
+      const x = pad.left + (i / (balanceHistory.length - 1)) * cw;
+      ctx.fillText(d.time, x, H - pad.bottom + 16);
+    }
+  });
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  grad.addColorStop(0, 'rgba(0,212,255,0.25)');
+  grad.addColorStop(1, 'rgba(0,212,255,0)');
+
+  // Line + fill path
+  ctx.beginPath();
+  balanceHistory.forEach((d, i) => {
+    const x = pad.left + (i / (balanceHistory.length - 1)) * cw;
+    const y = pad.top + ch - ((d.value - minV) / (maxV - minV)) * ch;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  // Fill
+  const lastX = pad.left + cw;
+  const firstX = pad.left;
+  ctx.lineTo(lastX, pad.top + ch);
+  ctx.lineTo(firstX, pad.top + ch);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line stroke
+  ctx.beginPath();
+  balanceHistory.forEach((d, i) => {
+    const x = pad.left + (i / (balanceHistory.length - 1)) * cw;
+    const y = pad.top + ch - ((d.value - minV) / (maxV - minV)) * ch;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Dots
+  balanceHistory.forEach((d, i) => {
+    const x = pad.left + (i / (balanceHistory.length - 1)) * cw;
+    const y = pad.top + ch - ((d.value - minV) / (maxV - minV)) * ch;
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#00d4ff'; ctx.fill();
+    ctx.strokeStyle = '#0a0e27'; ctx.lineWidth = 1.5; ctx.stroke();
+  });
 }
 
 // ===== UTILS =====
@@ -318,6 +466,10 @@ function showStatus(type, msg) {
     } catch (e) {}
   }
 })();
+
+// ===== INIT CHART =====
+drawChart();
+window.addEventListener('resize', drawChart);
 
 // ===== PARTICLES =====
 (function() {
